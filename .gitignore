@@ -1,0 +1,33 @@
+# Generated output files
+output/
+
+# Claude Code local settings (personal, not shared)
+CLAUDE.local.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Progress tracking (session-specific)
+claude-progress.txt
+feature_list.json
