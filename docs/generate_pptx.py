@@ -557,11 +557,14 @@ def _add_screenshot_slide(prs, step_label, title, bullets, img_path,
                           img_on_right=True, caption=""):
     """テキスト＋スクリーンショットの2カラムスライドを追加する.
 
-    img_on_right=True  → 左テキスト / 右スクショ
-    img_on_right=False → 上テキスト / 下スクショ（横長画像向け）
+    画像はアスペクト比を維持し、幅基準でフィットさせる。
+    灰色カードは使わず、画像に直接薄い枠線をつける。
     """
     slide = prs.slides.add_slide(prs.slide_layouts[6])
     set_slide_bg(slide, SLIDE_BG)
+
+    # 画像のアスペクト比(全画像 2940x1912 = 1.538)
+    IMG_RATIO = 2940 / 1912  # ≈ 1.538
 
     # ── ステップラベル（左上バッジ） ──
     badge = slide.shapes.add_shape(5, Inches(0.4), Inches(0.25), Inches(1.6), Inches(0.5))
@@ -575,94 +578,61 @@ def _add_screenshot_slide(prs, step_label, title, bullets, img_path,
     btf.paragraphs[0].font.color.rgb = WHITE
     btf.paragraphs[0].alignment = PP_ALIGN.CENTER
 
-    if img_on_right:
-        # ── 左カラム: タイトル + 箇条書き ──
-        txBox = slide.shapes.add_textbox(Inches(0.4), Inches(0.9), Inches(5.6), Inches(6.2))
-        tf = txBox.text_frame
-        tf.word_wrap = True
+    # ── 左カラム: タイトル + 箇条書き ──
+    txBox = slide.shapes.add_textbox(Inches(0.4), Inches(0.9), Inches(5.4), Inches(6.2))
+    tf = txBox.text_frame
+    tf.word_wrap = True
 
-        p = tf.paragraphs[0]
-        p.text = title
-        p.font.size = Pt(22)
-        p.font.bold = True
-        p.font.color.rgb = DARK_BLUE
-        p.space_after = Pt(12)
+    p = tf.paragraphs[0]
+    p.text = title
+    p.font.size = Pt(22)
+    p.font.bold = True
+    p.font.color.rgb = DARK_BLUE
+    p.space_after = Pt(12)
 
-        for item in bullets:
-            bp = tf.add_paragraph()
-            if isinstance(item, tuple):
-                text, size, bold, color = item
-            else:
-                text, size, bold, color = item, Pt(14), False, BLACK
-            bp.text = text
-            bp.font.size = size
-            bp.font.bold = bold
-            bp.font.color.rgb = color
-            bp.space_after = Pt(4)
+    for item in bullets:
+        bp = tf.add_paragraph()
+        if isinstance(item, tuple):
+            text, size, bold, color = item
+        else:
+            text, size, bold, color = item, Pt(14), False, BLACK
+        bp.text = text
+        bp.font.size = size
+        bp.font.bold = bold
+        bp.font.color.rgb = color
+        bp.space_after = Pt(4)
 
-        # ── 右カラム: スクリーンショット (白背景カード風) ──
-        card = slide.shapes.add_shape(
-            5, Inches(6.3), Inches(0.8), Inches(6.7), Inches(5.9)
+    # ── 右カラム: スクリーンショット（アスペクト比維持） ──
+    if Path(img_path).exists():
+        img_w = Inches(6.8)
+        img_h = img_w / IMG_RATIO  # ≈ 4.42 inches
+        img_x = Inches(6.2)
+        img_y = Inches(1.0)
+
+        # 高さがスライドからはみ出す場合は高さ基準に切り替え
+        max_h = Inches(5.8)
+        if img_h > max_h:
+            img_h = max_h
+            img_w = img_h * IMG_RATIO
+
+        pic = slide.shapes.add_picture(
+            str(img_path), img_x, img_y, img_w, img_h
         )
-        card.fill.solid()
-        card.fill.fore_color.rgb = WHITE
-        card.line.color.rgb = RGBColor(0xD1, 0xD5, 0xDB)
-        card.line.width = Pt(1)
-        card.shadow.inherit = False
+        # 画像に薄い枠線
+        pic.line.color.rgb = RGBColor(0xD1, 0xD5, 0xDB)
+        pic.line.width = Pt(1)
 
-        if Path(img_path).exists():
-            slide.shapes.add_picture(
-                str(img_path),
-                Inches(6.5), Inches(1.0), Inches(6.3), Inches(5.2)
+        # キャプション（画像の直下中央）
+        if caption:
+            cap_y = img_y + img_h + Inches(0.08)
+            cap_box = slide.shapes.add_textbox(
+                img_x, cap_y, img_w, Inches(0.35)
             )
-    else:
-        # ── 上部: タイトル + 箇条書き ──
-        txBox = slide.shapes.add_textbox(Inches(0.4), Inches(0.9), Inches(12.5), Inches(2.0))
-        tf = txBox.text_frame
-        tf.word_wrap = True
-
-        p = tf.paragraphs[0]
-        p.text = title
-        p.font.size = Pt(22)
-        p.font.bold = True
-        p.font.color.rgb = DARK_BLUE
-        p.space_after = Pt(8)
-
-        for item in bullets:
-            bp = tf.add_paragraph()
-            if isinstance(item, tuple):
-                text, size, bold, color = item
-            else:
-                text, size, bold, color = item, Pt(14), False, BLACK
-            bp.text = text
-            bp.font.size = size
-            bp.font.bold = bold
-            bp.font.color.rgb = color
-            bp.space_after = Pt(3)
-
-        # ── 下部: スクリーンショット（横長・中央配置） ──
-        card = slide.shapes.add_shape(
-            5, Inches(0.8), Inches(3.1), Inches(11.7), Inches(4.2)
-        )
-        card.fill.solid()
-        card.fill.fore_color.rgb = WHITE
-        card.line.color.rgb = RGBColor(0xD1, 0xD5, 0xDB)
-        card.line.width = Pt(1)
-
-        if Path(img_path).exists():
-            slide.shapes.add_picture(
-                str(img_path),
-                Inches(1.0), Inches(3.3), Inches(11.3), Inches(3.8)
-            )
-
-    # ── キャプション ──
-    if caption:
-        cap_box = slide.shapes.add_textbox(Inches(6.3), Inches(6.85), Inches(6.7), Inches(0.4))
-        ctf = cap_box.text_frame
-        ctf.paragraphs[0].text = caption
-        ctf.paragraphs[0].font.size = Pt(10)
-        ctf.paragraphs[0].font.color.rgb = GRAY
-        ctf.paragraphs[0].alignment = PP_ALIGN.CENTER
+            ctf = cap_box.text_frame
+            ctf.paragraphs[0].text = caption
+            ctf.paragraphs[0].font.size = Pt(10)
+            ctf.paragraphs[0].font.color.rgb = GRAY
+            ctf.paragraphs[0].alignment = PP_ALIGN.CENTER
 
     return slide
 
