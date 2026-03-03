@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fnl-builder 抽出ルール・プロンプト説明資料</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1a2e;
+    --accent: #16213e;
+    --border: #d1d5db;
+    --section-bg: #f9fafb;
+    --code-bg: #f3f4f6;
+    --highlight: #fef3c7;
+    --link: #2563eb;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Meiryo", sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    line-height: 1.8;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+  h1 { font-size: 1.6rem; border-bottom: 3px solid var(--accent); padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; margin-bottom: 0.8rem; padding: 0.4rem 0.6rem; background: var(--accent); color: #fff; border-radius: 4px; }
+  h3 { font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; border-left: 4px solid var(--accent); padding-left: 0.6rem; }
+  p { margin-bottom: 0.8rem; }
+  ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+  li { margin-bottom: 0.3rem; }
+  code { background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; font-family: "Consolas", "Monaco", monospace; }
+  .filepath { color: #6b21a8; font-weight: bold; }
+  .note { background: var(--highlight); border-left: 4px solid #f59e0b; padding: 0.8rem 1rem; margin: 1rem 0; border-radius: 0 4px 4px 0; }
+  .proposal { background: #eff6ff; border-left: 4px solid var(--link); padding: 0.8rem 1rem; margin: 1rem 0; border-radius: 0 4px 4px 0; }
+  .proposal::before { content: "【提案/検討事項】"; display: block; font-weight: bold; color: var(--link); margin-bottom: 0.3rem; }
+  nav { background: var(--section-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1.2rem 1.5rem; margin-bottom: 2rem; }
+  nav h2 { background: none; color: var(--fg); font-size: 1.1rem; margin-top: 0; padding: 0; }
+  nav ol { margin-top: 0.5rem; }
+  nav a { color: var(--link); text-decoration: none; }
+  nav a:hover { text-decoration: underline; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+  th, td { border: 1px solid var(--border); padding: 0.5rem 0.7rem; text-align: left; font-size: 0.92em; }
+  th { background: var(--section-bg); font-weight: bold; }
+  .meta { color: #6b7280; font-size: 0.85em; margin-bottom: 2rem; }
+</style>
+</head>
+<body>
+
+<h1>fnl-builder 抽出ルール・プロンプト説明資料</h1>
+<p class="meta">生成日: 2026-03-03 &#124; 対象リポジトリ: fnl-builder-main &#124; 目的: 現場担当者との合意形成</p>
+
+<nav>
+  <h2>目次</h2>
+  <ol>
+    <li><a href="#overview">全体像 ─ 抽出品質を担保する処理フロー</a></li>
+    <li><a href="#system-prompt">LLM System Prompt の要約（必須ルール・禁則・優先順位）</a></li>
+    <li><a href="#extract-prompt">LLM Extract Prompt の要約（入力・schema要求・出力制約）</a></li>
+    <li><a href="#taxonomy">taxonomy の要約（category/phase の一覧と選び方）</a></li>
+    <li><a href="#course-supplement">コース別サプリメントの仕組み</a></li>
+    <li><a href="#rulebased">ルールベース候補抽出の要約</a></li>
+    <li><a href="#banned">banned フィルタの要約</a></li>
+    <li><a href="#confirmation">現場確認ポイント（運用で決めるべき点）</a></li>
+  </ol>
+</nav>
+
+<!-- ======================================================== -->
+<section id="overview">
+  <h2>1. 全体像 ─ 抽出品質を担保する処理フロー</h2>
+  <p>
+    fnl-builder は、PDF/CSV のメッセージリスト（ML）から「特記事項」を抽出し、構造化されたゲスト別データとして最終名簿（FNL）に統合するパイプラインである。
+    品質担保は以下の3段階で行われる。
+  </p>
+  <ol>
+    <li>
+      <strong>ルールベース候補抽出</strong>（広い網）<br>
+      ファイル: <code class="filepath">src/fnl_builder/parse/messagelist_rules.py</code><br>
+      正規表現キーワード群で「特記事項になりやすい行」を候補として拾い上げる。この段階では取りこぼしを減らすことを優先しており、禁則に該当する行も混在し得る。
+    </li>
+    <li>
+      <strong>LLM による構造化抽出</strong>（精密な判定）<br>
+      ファイル: <code class="filepath">src/fnl_builder/llm/prompts/base_system.txt</code>, <code class="filepath">base_extract.md</code><br>
+      taxonomy に沿って各候補を category/phase/severity 等に分類し、JSON schema に準拠した構造化データを返す。「推測禁止」「evidence完全一致」「禁則優先」ルールにより、虚偽や不要な項目が生成されるリスクを抑制する。
+    </li>
+    <li>
+      <strong>統合・フィルタ・リライト</strong>（最終仕上げ）<br>
+      ファイル: <code class="filepath">src/fnl_builder/pipeline.py</code>, <code class="filepath">src/fnl_builder/integrate/remark_rewrite.py</code><br>
+      banned パターンによる早期除外、社内メモ・署名の除去、LLM出力とルールベース出力の統合（医療系の信頼度閾値に基づく判定を含む）を行い、最終的にゲスト別の特記事項として名簿に反映する。
+    </li>
+  </ol>
+  <p>
+    パイプライン全体の実行は <code class="filepath">src/fnl_builder/pipeline.py</code> の <code>run()</code> 関数が起点であり、<code>parse_stage</code> → <code>integrate_stage</code>（内部で LLM 抽出を実行）→ <code>render_stage</code> の順で処理が進む。
+  </p>
+</section>
+
+<!-- ======================================================== -->
+<section id="system-prompt">
+  <h2>2. LLM System Prompt の要約</h2>
+  <p>
+    ファイル: <code class="filepath">src/fnl_builder/llm/prompts/base_system.txt</code>（v1.0.4, 2026-02-24）<br>
+    LLM に「ML特記事項抽出エンジン」としての役割を与え、抽出品質を縛る14項目のルールセットを定義している。
+  </p>
+
+  <h3>2-1. 最重要ルール（全14項目の要約）</h3>
+  <table>
+    <thead>
+      <tr><th>No.</th><th>ルール名</th><th>内容</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>推測禁止</td><td>入力に書かれていない事実を作らない。常識・経験による補完を禁止。不確実なら <code>explicitness=unclear</code> または <code>severity=caution</code> で表現する。</td></tr>
+      <tr><td>2</td><td>JSON出力のみ</td><td>返信は <code>{"items":[...]}</code> のみ。Markdown、説明文、前置き・後書きは禁止。</td></tr>
+      <tr><td>3</td><td>スキーマ厳守</td><td>taxonomy の id のみ使用（ラベル文字列は使わない）。ML items schema に準拠。</td></tr>
+      <tr><td>4</td><td>Evidence完全一致</td><td><code>evidence.quote</code> は入力本文からの完全一致コピー。表記（空白、記号、改行）を変えない。正確にコピーできない場合はその item を作らない。</td></tr>
+      <tr><td>5</td><td>caution条件</td><td><code>severity=caution</code> なら <code>caution_reason</code> 必須。それ以外は空文字。完全一致に自信がない場合のみ <code>evidence_match=false</code> を許容。</td></tr>
+      <tr><td>6</td><td>PII最小化</td><td>旅券番号、電話番号、メール等の個人識別子を <code>who/details/summary/tags</code> に書かない。evidence.quote は根拠として必要だが、個人識別子を含まない短い抜粋を優先。</td></tr>
+      <tr><td>7</td><td>抽出判定の順番</td><td>「手配会社は誰に何をすればよいか」が明確でなければ抽出しない。RQ/HK判定：OPとルーミングは RQ のみ採用、HK/案内/質問は除外。装備サイズは HK でも採用。部屋の位置希望は RQ として <code>accommodation_room</code> で採用。</td></tr>
+      <tr><td>8</td><td>禁則</td><td>金銭/請求/保険/旅券/連絡先変更/社内進行/座席希望/旅行手続書類送付/各地発着申込/時間帯指定なし/未確定RQ/マイページ通知/WT関連/営業メモ等を問答無用で除外。</td></tr>
+      <tr><td>9</td><td>航空会社関連</td><td>機内食RQ/搭乗支援/機内持込配慮/到着影響のみ採用。窓側/通路側/座席指定は除外。</td></tr>
+      <tr><td>10</td><td>正規化</td><td>SSR/WCHR等のコード表記禁止（平文で記述）。新婚旅行/HM/honeymoon は「ハネムーン」に統一。他の祝事は原文表記を使用。</td></tr>
+      <tr><td>11</td><td>推測抑制(同室)</td><td>同室相手が本文で明示された場合のみ抽出。TWN/DBL/TRP が複数並んでも同室ペアを推測しない。</td></tr>
+      <tr><td>12</td><td>ランドオンリー正規化</td><td>L/O, LAND ONLY, ランドオンリー は「ランドオンリー（航空券自己手配・現地合流）」に正規化。合流/離団の場所・日時を summary と handoff_text に含める。</td></tr>
+      <tr><td>13</td><td>イレギュラー伝達事項</td><td>定型外でも「現地オペレーターが行動すべき具体的指示」は採用（VIP贈呈物、特別手配、アップグレード依頼等）。判断基準：手配会社がLANDオペレーターに伝達すべきか。</td></tr>
+      <tr><td>14</td><td>振替予約・コース混在時</td><td>コースNO の主番号（数字部分）で同一性判断。別コースセクションは medical 系のみ採用、OP/宿泊要望/行程関連は除外。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>2-2. 禁則の詳細範囲（System Prompt 側）</h3>
+  <p>System Prompt のルール8で定義される禁則は以下の通り。パイプライン側の banned フィルタよりも範囲が広い。</p>
+  <ul>
+    <li>金銭/請求/入金/領収書/クレカ/残金案内</li>
+    <li>旅行保険</li>
+    <li>旅券（パスポート番号・発行/有効期限・取得予定等）</li>
+    <li>連絡先変更（住所/電話/メール/送付先変更）</li>
+    <li>JR等の社内/交通案内、社内進行や一般注意</li>
+    <li>航空機の座席希望/座席クラス希望（健康理由があっても原則除外）</li>
+    <li>旅行手続書類の送付希望</li>
+    <li>各地発着申込</li>
+    <li>時間帯指定なし（「指定なし」「時間帯指定なし」等）</li>
+    <li>未確定・予定段階のリクエスト（ただし宿泊要望の「確約せず」「リクエスト中」「希望」は RQ として採用）</li>
+    <li>マイページ単独通知</li>
+    <li>WT（ウェイティング）関連</li>
+    <li>営業/社内担当者向けの進行メモ・連絡済み報告（「営業へ回送済み」「連絡メモ送信せず」「レラ済み」「イラ済み」「アナ済み」「HC登録あり」「お伺い書待ち」等。ただし同一文中に医療/手配に必要な事実が含まれる場合は営業メモ部分のみ除外し事実部分を残す）</li>
+    <li>対象者不明のアイテム（who_id を推測で埋めない）</li>
+  </ul>
+
+  <h3>2-3. 強制抽出ルール</h3>
+  <p>以下のキーワード・パターンに該当する記述は、最優先で必ず items 化するよう定められている。</p>
+  <ul>
+    <li><strong>アレルギー</strong>：「アレルギーなし」等の否定を除き、必ず items 化。category は原則 <code>dietary</code>、phase は <code>meal_time</code>。</li>
+    <li><strong>クレーム/苦情</strong>：「クレームなし」等の否定を除き、<code>vip_sensitive</code> として items 化。事実ベースの短い summary/handoff_text を付与。</li>
+    <li><strong>FNL指示文言</strong>（「FNL時CHK」「FNLチームへ」等）：対外アクション（現地ガイド/ランドオペレーター/ホテルへの連絡・共有・手配等）が本文に明示される場合のみ items 化。FNL内部確認のみ（「確認しておく」等）では items 化しない。禁則に該当する場合は FNL指示文言があっても除外される（禁則 &gt; 別コーススコープ &gt; FNL指示文言の優先順位）。</li>
+  </ul>
+
+  <h3>2-4. 病気/医療関連の詳細要約ルール</h3>
+  <p>
+    病名・症状に加え、医療機器/治療器具/薬品/量/本数/サイズ/持込方法を <code>handoff_text</code> に具体的に記載する。社内進行メモ（お伺い書待ち/HC登録済み等）は含めない。医療事実・数値・薬品名・機器スペックは省略禁止。240文字制限を超える場合は同一人物について items を複数に分割する。
+  </p>
+</section>
+
+<!-- ======================================================== -->
+<section id="extract-prompt">
+  <h2>3. LLM Extract Prompt の要約</h2>
+  <p>
+    ファイル: <code class="filepath">src/fnl_builder/llm/prompts/base_extract.md</code>（v1.1.0）<br>
+    System Prompt のルールを前提とし、実際の抽出タスクを指示する User Prompt テンプレートである。
+  </p>
+
+  <h3>3-1. 入力構造</h3>
+  <p>テンプレートには以下の2つのプレースホルダが存在し、実行時に動的に展開される。</p>
+  <ul>
+    <li><code>{{TAXONOMY_YAML}}</code> ─ taxonomy.yaml の全文がそのまま挿入される（category/phase の正本）</li>
+    <li><code>{{PAGES_TEXT}}</code> ─ PDF/CSV から抽出したページ別テキスト（1始まりのページ番号付き）</li>
+  </ul>
+
+  <h3>3-2. 出力 schema 要求</h3>
+  <p>各 item に以下のキーを必須とする。</p>
+  <table>
+    <thead><tr><th>キー</th><th>型</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>category</code></td><td>string</td><td>taxonomy の categories.id</td></tr>
+      <tr><td><code>phase</code></td><td>string</td><td>taxonomy の phases.id</td></tr>
+      <tr><td><code>summary</code></td><td>string</td><td>人が即判断できる短文（行動可能な粒度）</td></tr>
+      <tr><td><code>explicitness</code></td><td>enum</td><td><code>explicit</code> / <code>implicit</code> / <code>unclear</code></td></tr>
+      <tr><td><code>urgency</code></td><td>enum</td><td><code>high</code> / <code>medium</code> / <code>low</code> / <code>unknown</code></td></tr>
+      <tr><td><code>confidence</code></td><td>float</td><td>0.0〜1.0</td></tr>
+      <tr><td><code>severity</code></td><td>enum</td><td><code>error</code> / <code>warning</code> / <code>caution</code></td></tr>
+      <tr><td><code>caution_reason</code></td><td>string</td><td>severity=caution なら理由、それ以外は空文字 <code>""</code></td></tr>
+      <tr><td><code>evidence_match</code></td><td>boolean</td><td>原則 <code>true</code></td></tr>
+      <tr><td><code>evidence</code></td><td>object</td><td><code>{ page: 整数(1始まり), quote: 完全一致抜粋 }</code></td></tr>
+      <tr><td><code>handoff_text</code></td><td>string</td><td>運用向けの1文（SSR/WCHRコード禁止）</td></tr>
+      <tr><td><code>who_id</code></td><td>string</td><td>対象者の問い合わせ番号-枝番。特定不可なら空文字 <code>""</code></td></tr>
+    </tbody>
+  </table>
+
+  <h3>3-3. 出力制約</h3>
+  <ul>
+    <li>JSON object のみを返す（説明文/Markdown/コードブロック禁止）</li>
+    <li>全ページを最後まで確認する（後半ページの見落とし禁止）</li>
+    <li>該当0件なら <code>{"items": []}</code> を返す。無理に作らない</li>
+    <li><code>handoff_text</code> は運用向けの1文であり、SSR/WCHR等のコード表記は使用しない</li>
+  </ul>
+</section>
+
+<!-- ======================================================== -->
+<section id="taxonomy">
+  <h2>4. taxonomy の要約</h2>
+  <p>
+    ファイル: <code class="filepath">src/fnl_builder/llm/prompts/taxonomy.yaml</code>（v1.0.0, 2026-03-01）<br>
+    ML から抽出する特記事項の分類定義。category と phase の値はこのファイルを正本とする。taxonomy の変更は PR で管理し、必要なら decision_log.md に追記する運用が定められている。
+  </p>
+
+  <h3>4-1. category 一覧（11カテゴリ）</h3>
+  <table>
+    <thead><tr><th>id</th><th>ラベル</th><th>対象</th></tr></thead>
+    <tbody>
+      <tr><td><code>medical_health</code></td><td>医療/健康</td><td>病気、怪我、持病、妊娠、服薬、感染症、要受診、救急対応</td></tr>
+      <tr><td><code>dietary</code></td><td>食事制限/アレルギー</td><td>アレルギー、宗教/嗜好、ベジタリアン、禁忌食材、特別食</td></tr>
+      <tr><td><code>mobility_accessibility</code></td><td>移動支援/バリアフリー</td><td>車椅子、杖、歩行補助、階段不可、バス乗降補助、座席配慮</td></tr>
+      <tr><td><code>accommodation_room</code></td><td>宿泊/部屋/ホテル要望</td><td>禁煙/喫煙、ベッドタイプ、階層、隣室希望、追加寝具、チェックイン関連</td></tr>
+      <tr><td><code>grouping_companion</code></td><td>同行/グルーピング</td><td>同行者、同室/別室希望、グループ行動、親子/家族連動、部屋割り</td></tr>
+      <tr><td><code>vip_sensitive</code></td><td>VIP/要配慮/センシティブ</td><td>VIP、要配慮、クレームリスク、取扱注意、特別贈呈</td></tr>
+      <tr><td><code>schedule_change_separation</code></td><td>離団/日程変更/途中参加</td><td>離団、途中参加、延泊、帰国便変更、現地合流、復路別手配</td></tr>
+      <tr><td><code>documents_immigration</code></td><td>書類/入出国/手続</td><td>ビザ、ESTA、入国条件、書類不備、提示物、税関/検疫</td></tr>
+      <tr><td><code>communication_language</code></td><td>連絡/言語/緊急連絡</td><td>通訳要望、言語配慮、緊急連絡先、連絡手段</td></tr>
+      <tr><td><code>baggage_equipment</code></td><td>手荷物/特殊装備</td><td>大型荷物、医療機器、スポーツ用品、楽器、取扱注意品</td></tr>
+      <tr><td><code>other</code></td><td>その他/分類不明</td><td>上記に当てはまらない特記事項</td></tr>
+    </tbody>
+  </table>
+
+  <h3>4-2. phase 一覧（11フェーズ）</h3>
+  <table>
+    <thead><tr><th>id</th><th>ラベル</th><th>対象場面</th></tr></thead>
+    <tbody>
+      <tr><td><code>pre_departure</code></td><td>出発前</td><td>事前準備、手続、集合までに対応が必要</td></tr>
+      <tr><td><code>departure_airport</code></td><td>出発空港/集合</td><td>空港集合、出国前、搭乗手続周辺</td></tr>
+      <tr><td><code>flight</code></td><td>機内/航空移動</td><td>搭乗中、座席配慮、機内での対応</td></tr>
+      <tr><td><code>arrival_airport</code></td><td>到着空港/入国</td><td>入国、到着導線、検疫/税関周辺</td></tr>
+      <tr><td><code>transfer</code></td><td>送迎/移動(バス等)</td><td>バス、鉄道、車移動、乗降や座席配慮</td></tr>
+      <tr><td><code>on_tour</code></td><td>現地催行中</td><td>観光地、行程中、ガイド対応が必要</td></tr>
+      <tr><td><code>hotel_stay</code></td><td>ホテル滞在</td><td>チェックイン、部屋、滞在中対応</td></tr>
+      <tr><td><code>meal_time</code></td><td>食事</td><td>レストラン、食事制限対応が必要</td></tr>
+      <tr><td><code>free_time_optional</code></td><td>自由行動/OP</td><td>オプション、自由行動時に影響がある</td></tr>
+      <tr><td><code>return_trip</code></td><td>帰国/解散</td><td>復路、帰国時、解散周辺</td></tr>
+      <tr><td><code>unknown</code></td><td>不明/全般</td><td>フェーズ判断不可、または全般</td></tr>
+    </tbody>
+  </table>
+
+  <h3>4-3. 選び方の指針</h3>
+  <ul>
+    <li>category は原則として1つに正規化する。迷う場合は <code>other</code> を選び、summary に情報を残す。</li>
+    <li>phase は「実際に対応が必要になる場面」を優先して選ぶ。不明なら <code>unknown</code> を使用。</li>
+    <li>判断が曖昧でも、必ず evidence（page, quote）に紐づける。根拠なしの推測は禁止。</li>
+  </ul>
+
+  <h3>4-4. スケール定義</h3>
+  <p>explicitness（<code>explicit</code> / <code>implicit</code> / <code>unclear</code>）と urgency（<code>high</code> / <code>medium</code> / <code>low</code> / <code>unknown</code>）はそれぞれ taxonomy 内で定義されており、severity（<code>error</code> / <code>warning</code> / <code>caution</code>）は System Prompt 側で運用ルールが定められている。</p>
+</section>
+
+<!-- ======================================================== -->
+<section id="course-supplement">
+  <h2>5. コース別サプリメントの仕組み</h2>
+  <p>
+    ファイル: <code class="filepath">src/fnl_builder/llm/prompt_loader.py</code><br>
+    コース補足: <code class="filepath">src/fnl_builder/llm/prompts/courses/417.md</code>, <code class="filepath">_default.md</code>
+  </p>
+
+  <h3>5-1. コース番号の抽出ロジック</h3>
+  <p>
+    コースコード（例: <code>E417</code>, <code>EH417</code>, <code>ET470</code>）からアルファベットプレフィックスを除去し、先頭の数字列を「主番号」として抽出する。
+    正規表現 <code>^[A-Za-z]{1,3}(\d+)</code> を使用。
+  </p>
+  <ul>
+    <li><code>E417</code> → <code>417</code></li>
+    <li><code>EH417</code> → <code>417</code></li>
+    <li><code>ET470</code> → <code>470</code></li>
+    <li><code>E417Z</code> → <code>417</code></li>
+  </ul>
+
+  <h3>5-2. マージ手順</h3>
+  <ol>
+    <li>入力のコースコード群から重複なしの数字列セットを作る</li>
+    <li>各数字に対して <code>courses/{number}.md</code> を検索する</li>
+    <li>見つかったファイルを数字の昇順に並べ、行単位で重複排除しながらマージする</li>
+    <li>1つも見つからなかった場合は <code>courses/_default.md</code> にフォールバックする</li>
+  </ol>
+
+  <h3>5-3. 現存するコースファイル</h3>
+  <table>
+    <thead><tr><th>ファイル</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>417.md</code></td>
+        <td>シェンゲン協定圏のビザ要件を重点抽出。複数都市移動のため離団・合流の記載に注意。現地ガイドの言語対応を抽出。</td>
+      </tr>
+      <tr>
+        <td><code>_default.md</code></td>
+        <td>「コース固有の追加指示はありません。共通ルールに従ってください。」</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>5-4. プロンプト組み立て</h3>
+  <p>
+    <code>load_prompts()</code> 関数が system prompt（<code>base_system.txt</code>）、extract prompt（<code>base_extract.md</code>）、course supplement をまとめて <code>PromptConfig</code> として返す。course supplement は extract prompt の末尾に追加される形で LLM に渡される。
+  </p>
+</section>
+
+<!-- ======================================================== -->
+<section id="rulebased">
+  <h2>6. ルールベース候補抽出の要約</h2>
+  <p>
+    ファイル: <code class="filepath">src/fnl_builder/parse/messagelist_rules.py</code><br>
+    ML テキストの各行に対して正規表現キーワード群でマッチを行い、「特記事項になりやすい行」を候補として拾い上げる。
+  </p>
+
+  <h3>6-1. キーワード群の分類</h3>
+  <table>
+    <thead><tr><th>領域</th><th>代表的なキーワード・パターン</th></tr></thead>
+    <tbody>
+      <tr><td>食事/アレルギー</td><td><code>アレルギー</code>、<code>ベジタリアン</code>、<code>ハラール</code>、<code>苦手…食</code>、<code>食事…リクエスト/希望/制限</code></td></tr>
+      <tr><td>医療/病気</td><td><code>糖尿病</code>、<code>インシュリン</code>、<code>ペースメーカー</code>、<code>人工関節</code>、<code>透析</code></td></tr>
+      <tr><td>障害/移動支援</td><td><code>身障者</code>、<code>障害者</code>、<code>要介護</code>、<code>閉所恐怖</code>、<code>高所恐怖</code></td></tr>
+      <tr><td>歩行補助</td><td><code>車椅子</code>、<code>杖</code>、<code>松葉杖</code>、<code>歩行器</code>、<code>歩行…困難/制限</code></td></tr>
+      <tr><td>身体/関節</td><td><code>変形性</code>、<code>関節症</code>、<code>昇降…困難/できない</code></td></tr>
+      <tr><td>宿泊設備</td><td><code>エレベーター</code>、<code>ベッド…サイズ</code>、<code>ツイン/ダブル…希望</code>、<code>バスタブ…希望</code>、<code>エクステンション</code></td></tr>
+      <tr><td>部屋配置</td><td><code>隣室…希望</code>、<code>同フロア…希望</code>、<code>禁煙/喫煙…室</code>、<code>低層階/高層階…希望</code></td></tr>
+      <tr><td>VIP/クレーム</td><td><code>VIP</code>、<code>重要顧客</code>、<code>クレーム</code>、<code>苦情</code>、<code>トラブル</code>、<code>UR/VS/VP</code>（フラグ）</td></tr>
+      <tr><td>役職関連</td><td><code>役員</code>、<code>取締役</code>、<code>社長</code>、<code>部長</code> + <code>関連/親戚/家族/紹介</code></td></tr>
+      <tr><td>離団/合流</td><td><code>離団</code>、<code>途中参加</code>、<code>途中離脱</code>、<code>途中合流</code></td></tr>
+      <tr><td>交通手配</td><td><code>タクシー</code>、<code>チャーター</code>、<code>専用車</code></td></tr>
+      <tr><td>ランドオンリー</td><td><code>ランドオンリー</code>、<code>LAND ONLY</code>、<code>L/O</code>、<code>Ｌ／Ｏ</code>（半角/全角対応）</td></tr>
+      <tr><td>ギフト手配</td><td><code>フルーツ</code>、<code>チョコレート</code>、<code>ケーキ</code>、<code>花束</code>、<code>ギフト</code>、<code>プレゼント</code> + <code>手配/希望</code></td></tr>
+      <tr><td>OP RQ</td><td><code>OP RQ</code>（オプショナルツアーのリクエスト）</td></tr>
+    </tbody>
+  </table>
+
+  <h3>6-2. 候補抽出の流れ</h3>
+  <ol>
+    <li>各行に対して <code>_REMARKS_KEYWORDS</code>（30パターン）のいずれかがマッチするかを判定（<code>_has_remark_keyword()</code>）</li>
+    <li>マッチした行に banned フィルタ（後述）を適用し、該当すれば除外</li>
+    <li>残った行について PDF 日本語スペーシング修復、後方メモラベル除去、ダミープレフィックス除去、日付オペレータプレフィックス除去を順に適用</li>
+    <li>クリーニング後の文字列が3文字を超えていれば候補として返却</li>
+  </ol>
+
+  <h3>6-3. 目的と位置づけ</h3>
+  <p>
+    この段階は「取りこぼしを減らす」ための広い網である。誤検出（偽陽性）は後段の LLM 構造化抽出および統合フェーズで除外されるため、精度よりも再現率を優先する設計になっている。
+  </p>
+</section>
+
+<!-- ======================================================== -->
+<section id="banned">
+  <h2>7. banned フィルタの要約</h2>
+  <p>
+    ファイル: <code class="filepath">src/fnl_builder/pipeline.py</code>（<code>_BANNED_PATTERNS</code>, <code>_remarks_has_banned()</code>）
+  </p>
+
+  <h3>7-1. 現状の banned パターン（パイプライン側）</h3>
+  <table>
+    <thead><tr><th>パターン</th><th>除外対象</th></tr></thead>
+    <tbody>
+      <tr><td><code>請求|入金|領収書|残金|クレジット|クレカ|支払|料金</code></td><td>金銭・請求関連</td></tr>
+      <tr><td><code>旅行保険|保険</code></td><td>旅行保険関連</td></tr>
+      <tr><td><code>社内進行|社内手配|社内</code></td><td>社内進行メモ関連</td></tr>
+    </tbody>
+  </table>
+
+  <h3>7-2. 適用タイミング</h3>
+  <p>
+    <code>_remarks_has_banned()</code> は <code>parse_message_list()</code> 呼び出し時にコールバックとして渡され、ルールベース候補抽出（<code>_extract_message_list_remark()</code>）の中でキーワードマッチ後に呼ばれる。マッチした行は候補から即座に除外される。
+    また、統合フェーズ（<code>integrate_stage</code>）でも <code>remarks_has_banned</code> としてゲスト統合処理に渡されている。
+  </p>
+
+  <h3>7-3. System Prompt 禁則との差分</h3>
+  <p>
+    パイプライン側の banned は「最低限の早期除外」に留めており、System Prompt 側の禁則（ルール8）はより広い範囲をカバーしている。
+    以下は System Prompt にのみ存在する禁則であり、パイプライン側では除外されない。
+  </p>
+  <ul>
+    <li>旅券（パスポート番号・発行/有効期限・取得予定等）</li>
+    <li>連絡先変更（住所/電話/メール/送付先変更）</li>
+    <li>航空機の座席希望/座席クラス希望</li>
+    <li>旅行手続書類の送付希望</li>
+    <li>各地発着申込</li>
+    <li>時間帯指定なし</li>
+    <li>未確定・予定段階のリクエスト（宿泊要望の RQ 例外あり）</li>
+    <li>マイページ単独通知</li>
+    <li>WT（ウェイティング）関連</li>
+    <li>営業/社内担当者向けの進行メモ（一部は <code>remark_rewrite.py</code> の社内メモ除去で対応）</li>
+  </ul>
+
+  <div class="proposal">
+    パイプライン側 banned を System Prompt 禁則に合わせて拡張するか、現状のまま LLM 側に判断を委ねるかは運用方針による。
+    パイプライン側を拡張すると LLM への入力が減り推論コストが下がるが、禁則管理が二重になるリスクがある。
+  </div>
+</section>
+
+<!-- ======================================================== -->
+<section id="confirmation">
+  <h2>8. 現場確認ポイント</h2>
+  <p>
+    以下は、コード上の定義だけでは判断が確定しない項目であり、現場担当者との合意形成で運用を安定させるべき論点である。
+  </p>
+
+  <h3>8-1. 禁則の範囲をどこに寄せるか</h3>
+  <ul>
+    <li><strong>現状</strong>: パイプライン側の banned は金銭/保険/社内の3パターンのみ。それ以外の禁則は LLM System Prompt に委ねている。</li>
+    <li><strong>論点</strong>: LLM のみに禁則判定を任せると、LLM が禁則を見落とした場合にフォールバックがない。パイプライン側にも旅券/連絡先変更/座席希望等を追加するか。</li>
+    <li><strong>トレードオフ</strong>: パイプライン側を拡張すれば安全性が上がるが、禁則定義の二重管理が必要になる。一元管理するなら System Prompt 側を正本とし、パイプライン側はそこからの自動生成にする方法がある。</li>
+  </ul>
+
+  <h3>8-2. RQ/HK の採用基準</h3>
+  <ul>
+    <li><strong>現状のルール</strong>: OP とルーミング（宿泊要望）は RQ のみ採用。HK/案内/質問は除外。装備サイズは HK でも採用。部屋の位置希望は RQ として <code>accommodation_room</code> で採用。</li>
+    <li><strong>論点</strong>: 「OP申込/HK/予約済」の除外基準が実運用と合っているか。OP の HK（予約確定済み）でも現地に伝達すべきケース（例: 特殊な OP で現地ガイドが把握すべきもの）がないか。</li>
+  </ul>
+
+  <h3>8-3. 別コース混在時の medical 限定採用</h3>
+  <ul>
+    <li><strong>現状のルール</strong>: 別コースセクションは medical 系（病気/アレルギー/介助/車椅子等）のみ採用し、OP/宿泊要望/行程関連は除外する。</li>
+    <li><strong>論点</strong>: 別コースの VIP/センシティブ情報（クレーム履歴等）も引き継ぐべきか。medical の範囲を <code>medical_health</code> / <code>dietary</code> / <code>mobility_accessibility</code> の3カテゴリに限定するか、<code>baggage_equipment</code>（医療機器）も含めるか。</li>
+  </ul>
+
+  <h3>8-4. evidence.quote 完全一致の厳密度</h3>
+  <ul>
+    <li><strong>現状のルール</strong>: evidence.quote は入力本文からの完全一致コピーであり、正確にコピーできない場合はその item を作らない。</li>
+    <li><strong>論点</strong>: 完全一致を厳守すると、PDF のスペーシング崩れや OCR 由来の文字化けで正当な項目が採用されないリスクがある。パイプライン側では <code>_repair_pdf_jp_spacing()</code> で CJK 文字間の不要スペースを修復しているが、LLM に渡すテキストにも同じ修復が適用されているか確認が必要。</li>
+    <li><strong>トレードオフ</strong>: 完全一致を最優先にすれば採用件数は減るが、虚偽 evidence の混入事故は減る。</li>
+  </ul>
+
+  <h3>8-5. 社内メモ除去の範囲</h3>
+  <ul>
+    <li><strong>現状</strong>: <code class="filepath">src/fnl_builder/integrate/remark_rewrite.py</code> で営業メモフレーズ（「営業へ回送済み」「イラ済み」「アナ済み」「レラ済み」「HC登録あり」「お伺い書待ち」等）を正規表現で除去。署名（部署名+担当者名+日時）も4パターンの正規表現で末尾から除去。</li>
+    <li><strong>論点</strong>: 除去パターンの網羅性。新たな社内メモ表現が増えた場合の追加手順を定めておくと運用が安定する。</li>
+  </ul>
+
+  <h3>8-6. 医療系の信頼度閾値</h3>
+  <ul>
+    <li><strong>現状</strong>: <code class="filepath">remark_rewrite.py</code> で <code>_MEDICAL_CONFIDENCE_THRESHOLD = 0.80</code> が定義されている。LLM が返す <code>confidence</code> がこの閾値以上で、かつ <code>evidence_quote</code> が空でない場合に「信頼できる医療アイテム」と判定し、ルールベース候補との統合方式を変える。</li>
+    <li><strong>論点</strong>: 0.80 という閾値が実運用で適切か。閾値を下げると採用件数が増えるがノイズも増える。閾値を上げると確実だが見落としリスクが上がる。</li>
+  </ul>
+
+  <h3>8-7. FNL指示文言の対外アクション判定</h3>
+  <ul>
+    <li><strong>現状のルール</strong>: 「FNL時CHK」「FNLチームへ」等の文言は、対外アクション（現地ガイド/ランドオペレーター/ホテルへの連絡・共有・手配等）が本文に明示される場合のみ items 化する。</li>
+    <li><strong>論点</strong>: 「対外アクションの明示」の判定基準が LLM の解釈に依存する。実運用で「FNL指示文言があるのに抽出されない」ケースが発生した場合、System Prompt のルールを調整するか、ルールベース側で FNL指示文言を検知して強制候補化するかを決める必要がある。</li>
+  </ul>
+</section>
+
+<footer style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.85em; color: #6b7280;">
+  <p>本資料は fnl-builder リポジトリのソースコードに基づいて生成されています。記載内容は各ファイルの実装に準拠しており、推測や一般論は「提案/検討事項」として別枠に分離しています。</p>
+  <p>参照ファイル一覧:</p>
+  <ul>
+    <li><code>src/fnl_builder/llm/prompts/base_system.txt</code> (v1.0.4)</li>
+    <li><code>src/fnl_builder/llm/prompts/base_extract.md</code> (v1.1.0)</li>
+    <li><code>src/fnl_builder/llm/prompts/taxonomy.yaml</code> (v1.0.0)</li>
+    <li><code>src/fnl_builder/llm/prompts/courses/417.md</code></li>
+    <li><code>src/fnl_builder/llm/prompts/courses/_default.md</code></li>
+    <li><code>src/fnl_builder/llm/prompt_loader.py</code></li>
+    <li><code>src/fnl_builder/parse/messagelist_rules.py</code></li>
+    <li><code>src/fnl_builder/pipeline.py</code></li>
+    <li><code>src/fnl_builder/integrate/remark_rewrite.py</code></li>
+  </ul>
+</footer>
+
+</body>
+</html>
