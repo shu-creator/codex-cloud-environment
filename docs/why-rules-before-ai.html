@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>なぜ「ルール＋AI」の2段構成が有効なのか — 社内レクチャー資料</title>
+<style>
+  :root {
+    --blue: #2563eb;
+    --blue-light: #eff6ff;
+    --green: #16a34a;
+    --green-light: #f0fdf4;
+    --red: #dc2626;
+    --red-light: #fef2f2;
+    --orange: #ea580c;
+    --orange-light: #fff7ed;
+    --purple: #7c3aed;
+    --purple-light: #f5f3ff;
+    --gray: #374151;
+    --gray-light: #f9fafb;
+    --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'メイリオ', sans-serif;
+    color: var(--gray);
+    line-height: 1.8;
+    background: #f3f4f6;
+    padding: 0;
+  }
+
+  /* ========== ヒーローセクション ========== */
+  .hero {
+    background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+    color: #fff;
+    padding: 60px 40px;
+    text-align: center;
+  }
+  .hero h1 {
+    font-size: 2.2rem;
+    margin-bottom: 16px;
+    letter-spacing: 0.02em;
+  }
+  .hero .subtitle {
+    font-size: 1.15rem;
+    opacity: 0.9;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  /* ========== コンテナ ========== */
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+
+  /* ========== セクション ========== */
+  section {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    padding: 36px 32px;
+    margin-bottom: 32px;
+  }
+  section h2 {
+    font-size: 1.45rem;
+    color: var(--blue);
+    border-bottom: 3px solid var(--blue);
+    padding-bottom: 8px;
+    margin-bottom: 24px;
+  }
+  section h3 {
+    font-size: 1.15rem;
+    margin: 20px 0 10px;
+  }
+  p { margin-bottom: 14px; }
+
+  /* ========== たとえ話ボックス ========== */
+  .analogy {
+    background: var(--purple-light);
+    border-left: 4px solid var(--purple);
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+  .analogy .label {
+    font-weight: bold;
+    color: var(--purple);
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+  }
+
+  /* ========== 比較テーブル ========== */
+  .comparison-wrapper {
+    overflow-x: auto;
+  }
+  table.comparison {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.95rem;
+  }
+  table.comparison th {
+    background: var(--blue);
+    color: #fff;
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+  }
+  table.comparison th:first-child { border-radius: 8px 0 0 0; }
+  table.comparison th:last-child { border-radius: 0 8px 0 0; }
+  table.comparison td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  table.comparison tr:nth-child(even) { background: var(--gray-light); }
+  table.comparison .bad { color: var(--red); font-weight: 600; }
+  table.comparison .good { color: var(--green); font-weight: 600; }
+
+  /* ========== フロー図 ========== */
+  .flow-diagram {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 24px 0;
+  }
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .flow-box {
+    flex: 1;
+    border-radius: 10px;
+    padding: 18px 20px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1rem;
+    position: relative;
+  }
+  .flow-box small {
+    display: block;
+    font-weight: 400;
+    font-size: 0.85rem;
+    margin-top: 4px;
+    opacity: 0.85;
+  }
+  .flow-arrow {
+    text-align: center;
+    font-size: 1.6rem;
+    color: var(--gray);
+    padding: 4px 0;
+  }
+  .flow-input   { background: #e0e7ff; color: #3730a3; border: 2px solid #818cf8; }
+  .flow-rule    { background: var(--green-light); color: #15803d; border: 2px solid #86efac; }
+  .flow-ai      { background: var(--purple-light); color: #6d28d9; border: 2px solid #c4b5fd; }
+  .flow-output  { background: var(--orange-light); color: #c2410c; border: 2px solid #fdba74; }
+  .flow-bad     { background: var(--red-light); color: var(--red); border: 2px solid #fca5a5; }
+
+  /* ========== ハイライトボックス ========== */
+  .highlight-box {
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 16px 0;
+  }
+  .highlight-box.green  { background: var(--green-light); border-left: 4px solid var(--green); }
+  .highlight-box.red    { background: var(--red-light); border-left: 4px solid var(--red); }
+  .highlight-box.blue   { background: var(--blue-light); border-left: 4px solid var(--blue); }
+  .highlight-box.orange { background: var(--orange-light); border-left: 4px solid var(--orange); }
+  .highlight-box .title {
+    font-weight: 700;
+    font-size: 1.05rem;
+    margin-bottom: 8px;
+  }
+  .highlight-box ul { padding-left: 20px; }
+  .highlight-box li { margin-bottom: 6px; }
+
+  /* ========== ステップ番号 ========== */
+  .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    background: var(--blue);
+    color: #fff;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-right: 10px;
+    flex-shrink: 0;
+  }
+  .step-row {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 18px;
+  }
+  .step-content { flex: 1; }
+  .step-content strong { color: var(--blue); }
+
+  /* ========== 具体例カード ========== */
+  .example-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .example-card {
+    border-radius: 10px;
+    padding: 18px 20px;
+    border: 1px solid var(--border);
+  }
+  .example-card .tag {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+  .example-card .tag.rule { background: #dcfce7; color: #15803d; }
+  .example-card .tag.ai   { background: #ede9fe; color: #6d28d9; }
+  .example-card .text {
+    font-size: 0.92rem;
+    background: #f9fafb;
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-top: 8px;
+    border: 1px dashed var(--border);
+  }
+
+  /* ========== 数字ハイライト ========== */
+  .stats-row {
+    display: flex;
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .stat-card {
+    flex: 1;
+    background: #fff;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+  .stat-card .number {
+    font-size: 2.4rem;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+  .stat-card .number.green { color: var(--green); }
+  .stat-card .number.red   { color: var(--red); }
+  .stat-card .number.blue  { color: var(--blue); }
+  .stat-card .label {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-top: 4px;
+  }
+
+  /* ========== まとめセクション ========== */
+  .summary-section {
+    background: linear-gradient(135deg, #1e40af 0%, #7c3aed 100%);
+    color: #fff;
+    border-radius: 12px;
+    padding: 36px 32px;
+    margin-bottom: 32px;
+  }
+  .summary-section h2 {
+    color: #fff;
+    border-bottom-color: rgba(255,255,255,0.3);
+  }
+  .summary-section .point {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .summary-section .point .icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .summary-section .point p {
+    margin: 0;
+  }
+
+  /* ========== 印刷対応 ========== */
+  @media print {
+    body { background: #fff; }
+    .hero { padding: 30px 20px; }
+    section { box-shadow: none; border: 1px solid var(--border); page-break-inside: avoid; }
+    .summary-section { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 1.5rem; }
+    .example-grid { grid-template-columns: 1fr; }
+    .stats-row { flex-direction: column; }
+    section { padding: 24px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== ヒーロー ==================== -->
+<div class="hero">
+  <h1>なぜ「ルール＋AI」の2段構成が有効なのか</h1>
+  <p class="subtitle">
+    PDF・CSVからの情報抽出において、<br>
+    コードベースのルール処理とAIを組み合わせることで<br>
+    精度・安定性・コストすべてが改善できる理由を解説します
+  </p>
+</div>
+
+<div class="container">
+
+<!-- ==================== 1. 現状の課題 ==================== -->
+<section>
+  <h2>1. AIだけで抽出する場合の課題</h2>
+
+  <p>現在の自社AIプロジェクトでは、PDF/CSVの原文をそのままAIに渡して情報を抽出しています。<br>
+  この方式には以下の課題があります。</p>
+
+  <div class="highlight-box red">
+    <div class="title">AIだけの場合に起きる問題</div>
+    <ul>
+      <li><strong>抜け漏れ（見落とし）</strong>：同じPDFでも、実行するたびに抽出される項目が変わることがある</li>
+      <li><strong>ばらつき</strong>：「アレルギー」を拾えたり拾えなかったり、結果が不安定</li>
+      <li><strong>コスト高</strong>：大量のPDFテキストをすべてAIに送ると、API利用料がかさむ</li>
+      <li><strong>処理時間</strong>：AIの応答を待つため、1件あたり数十秒かかることも</li>
+      <li><strong>原因究明が困難</strong>：なぜ抜け漏れが起きたか後から追跡しにくい</li>
+    </ul>
+  </div>
+
+  <div class="analogy">
+    <div class="label">たとえ話：書類チェックの場面で考えると…</div>
+    <p>
+      ベテラン社員に「この100枚の書類から重要な情報を全部拾って」と丸投げするようなものです。<br>
+      いくら優秀でも、チェックリストなしに100枚を読み通せば、当然見落としが出ます。<br>
+      <strong>毎回同じ精度は期待できません。</strong>
+    </p>
+  </div>
+</section>
+
+<!-- ==================== 2. 2段構成の考え方 ==================== -->
+<section>
+  <h2>2.「ルール → AI」の2段構成とは</h2>
+
+  <p>fnl-builder では、以下の2ステップで情報を抽出しています。</p>
+
+  <!-- フロー図 -->
+  <div class="flow-diagram">
+    <div class="flow-row">
+      <div class="flow-box flow-input">
+        PDF / CSV ファイル
+        <small>ルーミングリスト・乗客名簿・メッセージリスト</small>
+      </div>
+    </div>
+    <div class="flow-arrow">▼</div>
+    <div class="flow-row">
+      <div class="flow-box flow-rule">
+        第1段階：ルールベース抽出
+        <small>キーワード照合・正規表現パターン・テンプレート構造解析</small>
+      </div>
+    </div>
+    <div class="flow-arrow">▼</div>
+    <div class="flow-row">
+      <div class="flow-box flow-ai">
+        第2段階：AI による補完抽出
+        <small>ルールで取りこぼした情報をAIが文脈で拾う</small>
+      </div>
+    </div>
+    <div class="flow-arrow">▼</div>
+    <div class="flow-row">
+      <div class="flow-box flow-output">
+        最終出力（Excel）
+        <small>ルール抽出 ＋ AI抽出 を統合した完成リスト</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="label">たとえ話：書類チェックの場面で考えると…</div>
+    <p>
+      <strong>第1段階（ルール）</strong>= 定型チェックリストで機械的にチェック。<br>
+      「アレルギー」「車椅子」「VIP」などの決まったキーワードが書かれていれば<strong>100%確実に拾う</strong>。<br><br>
+      <strong>第2段階（AI）</strong>= チェックリストに載っていない"行間の情報"をベテランが補足。<br>
+      「足が不自由なので低層階希望」のように、キーワードには当てはまらないが<strong>意味的に重要な情報</strong>をAIが拾う。
+    </p>
+  </div>
+</section>
+
+<!-- ==================== 3. ルールとAIの役割分担 ==================== -->
+<section>
+  <h2>3. それぞれが何をしているのか</h2>
+
+  <h3>第1段階：ルールベース抽出（確実に拾えるもの）</h3>
+  <div class="highlight-box green">
+    <div class="title">ルールが担当する処理</div>
+    <ul>
+      <li><strong>問い合わせ番号の特定</strong>：「0067368202-001」のような決まった形式の番号を自動認識</li>
+      <li><strong>キーワード照合</strong>：30以上の重要キーワードを一瞬でチェック
+        <ul>
+          <li>アレルギー、ベジタリアン、ハラール（食事関連）</li>
+          <li>糖尿病、ペースメーカー、車椅子（医療関連）</li>
+          <li>禁煙、低層階、エレベーター近く（宿泊関連）</li>
+          <li>VIP、苦情、重要顧客（特別対応）</li>
+        </ul>
+      </li>
+      <li><strong>不要情報の除外</strong>：保険情報、社内メモ、経理データなど業務に不要な情報を自動フィルタ</li>
+      <li><strong>テキスト整形</strong>：PDF特有の不要スペースや改行崩れを修復</li>
+    </ul>
+  </div>
+
+  <h3>第2段階：AI補完抽出（ルールでは拾えないもの）</h3>
+  <div class="highlight-box blue">
+    <div class="title">AIが担当する処理</div>
+    <ul>
+      <li><strong>文脈の理解</strong>：「足が悪い」→ 移動介助が必要、と意味を解釈</li>
+      <li><strong>曖昧な表現の解釈</strong>：「前回ご不満があった」→ VIP・要注意対応、と判断</li>
+      <li><strong>抜け漏れページの再チェック</strong>：1回目で何も抽出されなかったページだけ再スキャン</li>
+      <li><strong>カテゴリ分類</strong>：抽出した情報を「医療」「食事」「移動」などに自動分類</li>
+    </ul>
+  </div>
+
+  <h3>具体例で見る役割分担</h3>
+  <div class="example-grid">
+    <div class="example-card">
+      <span class="tag rule">ルールで拾える</span>
+      <p><strong>原文</strong>：</p>
+      <div class="text">甲殻類アレルギーのため食事配慮希望</div>
+      <p style="margin-top:8px; font-size:0.9rem;">→ 「アレルギー」というキーワードに一致 → 確実に抽出</p>
+    </div>
+    <div class="example-card">
+      <span class="tag ai">AIで拾う</span>
+      <p><strong>原文</strong>：</p>
+      <div class="text">母の足が最近弱くなり長距離歩行は避けたい</div>
+      <p style="margin-top:8px; font-size:0.9rem;">→ キーワードには該当しないが、文脈から「移動介助」と判断</p>
+    </div>
+    <div class="example-card">
+      <span class="tag rule">ルールで除外</span>
+      <p><strong>原文</strong>：</p>
+      <div class="text">旅行保険加入済み（証券番号: TI-2024-XXXX）</div>
+      <p style="margin-top:8px; font-size:0.9rem;">→ 保険・経理情報は自動フィルタで除外 → AIに渡さない</p>
+    </div>
+    <div class="example-card">
+      <span class="tag ai">AIで拾う</span>
+      <p><strong>原文</strong>：</p>
+      <div class="text">結婚25周年の記念旅行とのこと</div>
+      <p style="margin-top:8px; font-size:0.9rem;">→ 「記念日」カテゴリとして、特別対応の情報に分類</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 4. 比較 ==================== -->
+<section>
+  <h2>4. 「AIのみ」と「ルール＋AI」の比較</h2>
+
+  <!-- 比較フロー：AIのみ -->
+  <h3 style="color: var(--red);">パターンA：AIのみ（現在の自社AI方式）</h3>
+  <div class="flow-diagram">
+    <div class="flow-row">
+      <div class="flow-box flow-input">PDF / CSV<small>全テキスト</small></div>
+    </div>
+    <div class="flow-arrow">▼ 全文をそのまま</div>
+    <div class="flow-row">
+      <div class="flow-box flow-bad">
+        AIに丸投げ
+        <small>大量テキストから全情報を1回で抽出</small>
+      </div>
+    </div>
+    <div class="flow-arrow">▼ 結果にバラつき</div>
+    <div class="flow-row">
+      <div class="flow-box flow-bad">
+        出力（不安定）
+        <small>実行のたびに抜け漏れが変わる</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- 比較フロー：ルール+AI -->
+  <h3 style="color: var(--green);">パターンB：ルール＋AI（fnl-builder 方式）</h3>
+  <div class="flow-diagram">
+    <div class="flow-row">
+      <div class="flow-box flow-input">PDF / CSV<small>全テキスト</small></div>
+    </div>
+    <div class="flow-arrow">▼ まず定型チェック</div>
+    <div class="flow-row">
+      <div class="flow-box flow-rule">
+        ルールベース抽出
+        <small>キーワード照合で確実に拾えるものは先に確定</small>
+      </div>
+    </div>
+    <div class="flow-arrow">▼ 拾い残しだけ</div>
+    <div class="flow-row">
+      <div class="flow-box flow-ai">
+        AI補完抽出
+        <small>ルールで拾えなかった部分だけAIに依頼</small>
+      </div>
+    </div>
+    <div class="flow-arrow">▼ 統合</div>
+    <div class="flow-row">
+      <div class="flow-box flow-output">
+        出力（安定）
+        <small>ルール結果（確定）＋ AI結果（補完）を統合</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- 比較表 -->
+  <div class="comparison-wrapper">
+    <table class="comparison">
+      <thead>
+        <tr>
+          <th>比較項目</th>
+          <th>AIのみ</th>
+          <th>ルール＋AI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>定型キーワードの抽出精度</strong></td>
+          <td class="bad">90%前後（見落としあり）</td>
+          <td class="good">100%（ルールで確実に拾う）</td>
+        </tr>
+        <tr>
+          <td><strong>結果の安定性</strong></td>
+          <td class="bad">実行ごとにバラつく</td>
+          <td class="good">ルール部分は毎回同じ結果</td>
+        </tr>
+        <tr>
+          <td><strong>全体の抽出率（推定）</strong></td>
+          <td class="bad">70〜85%</td>
+          <td class="good">90%以上</td>
+        </tr>
+        <tr>
+          <td><strong>処理速度</strong></td>
+          <td class="bad">全文AI処理 → 遅い</td>
+          <td class="good">ルール部分は一瞬 → 全体高速</td>
+        </tr>
+        <tr>
+          <td><strong>API利用コスト</strong></td>
+          <td class="bad">全文送信 → 高い</td>
+          <td class="good">補完分だけ送信 → 低い</td>
+        </tr>
+        <tr>
+          <td><strong>不要情報の混入</strong></td>
+          <td class="bad">AIが誤って拾うことがある</td>
+          <td class="good">ルールで事前に除外済み</td>
+        </tr>
+        <tr>
+          <td><strong>原因追跡（なぜ拾えた/拾えなかった）</strong></td>
+          <td class="bad">AIの判断で不透明</td>
+          <td class="good">ルール=明確 / AI=根拠テキスト付き</td>
+        </tr>
+        <tr>
+          <td><strong>ルール追加の容易さ</strong></td>
+          <td class="bad">プロンプト書き換え（副作用リスク）</td>
+          <td class="good">キーワード1行追加で済む</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ==================== 5. 数字で見る効果 ==================== -->
+<section>
+  <h2>5. 数字で見る効果（イメージ）</h2>
+
+  <p>たとえば100件の重要情報が含まれたPDFを処理した場合：</p>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="number red">70〜85件</div>
+      <div class="label">AIのみで抽出できる件数<br>（15〜30件の漏れ）</div>
+    </div>
+    <div class="stat-card">
+      <div class="number blue">75件</div>
+      <div class="label">ルールだけで確実に抽出<br>（定型キーワード一致分）</div>
+    </div>
+    <div class="stat-card">
+      <div class="number green">90件以上</div>
+      <div class="label">ルール＋AIで抽出<br>（漏れが10件以下に）</div>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="label">ポイント</div>
+    <p>
+      ルールだけでも75件は確実に拾えます。<br>
+      AIは残りの25件のうち15件以上を拾い上げるので、合計で<strong>90件以上</strong>。<br>
+      しかも75件分のルール結果は<strong>毎回100%同じ</strong>なので、安定性が格段に上がります。
+    </p>
+  </div>
+</section>
+
+<!-- ==================== 6. なぜルールが先なのか ==================== -->
+<section>
+  <h2>6. なぜルールを「先に」入れるべきなのか</h2>
+
+  <div class="step-row">
+    <span class="step-num">1</span>
+    <div class="step-content">
+      <strong>確実に拾えるものは、確実な方法で拾う</strong>
+      <p>「アレルギー」「車椅子」のような決まったキーワードは、AIに頼る必要がありません。<br>
+      キーワード一致という単純なルールで<strong>100%確実に、一瞬で</strong>抽出できます。</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <span class="step-num">2</span>
+    <div class="step-content">
+      <strong>AIの負担を減らすことで精度が上がる</strong>
+      <p>AIに渡す情報量が少なくなると、残りの情報に集中できるため、<br>
+      AIの判断精度が<strong>逆に上がります</strong>。100枚の書類を全部読むより、<br>
+      「この20枚だけ注意して読んで」と言われた方が精度が高いのと同じです。</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <span class="step-num">3</span>
+    <div class="step-content">
+      <strong>不要な情報をAIに見せない</strong>
+      <p>保険情報や社内メモなど、業務に不要な情報をルールで事前に除外します。<br>
+      AIがこれらを誤って「重要情報」と判断するリスクをなくせます。</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <span class="step-num">4</span>
+    <div class="step-content">
+      <strong>コスト削減</strong>
+      <p>AI（API）は使った分だけお金がかかります。<br>
+      ルールで先に処理した分はAPIを使わないので、<strong>コストが下がります</strong>。</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <span class="step-num">5</span>
+    <div class="step-content">
+      <strong>問題が起きたとき原因を特定しやすい</strong>
+      <p>ルール部分は「なぜ拾えたか/拾えなかったか」が<strong>一目瞭然</strong>です。<br>
+      AI部分も根拠テキスト（どの原文から判断したか）が記録されるので、<br>
+      後から追跡・改善ができます。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 7. 実際の処理の流れ ==================== -->
+<section>
+  <h2>7. 実際のシステムではどう動いているか</h2>
+
+  <p>fnl-builder の処理フローを、コードの知識がなくてもわかるように図解します。</p>
+
+  <h3>ステップ1：ファイルを読み込む</h3>
+  <div class="highlight-box blue">
+    <p>PDF/CSV ファイルからテキストを取り出します。<br>
+    PDFは画像ではなくテキストとして読み取り、CSVは文字コードを自動判定して読み込みます。</p>
+  </div>
+
+  <h3>ステップ2：ルールベース抽出</h3>
+  <div class="highlight-box green">
+    <div class="title">ここで7〜8割の情報が確定する</div>
+    <p>テキストを1行ずつ走査し、以下のルールを適用します：</p>
+    <ul>
+      <li>問い合わせ番号のパターン照合 → 誰の情報かを特定</li>
+      <li>30以上の重要キーワードとの照合 → 該当すれば即抽出</li>
+      <li>除外パターンとの照合 → 不要情報を除去</li>
+      <li>テキストの整形 → PDF特有の崩れを修復</li>
+    </ul>
+    <p><strong>処理時間は数百ミリ秒（1秒未満）。AIは一切使いません。</strong></p>
+  </div>
+
+  <h3>ステップ3：AI補完抽出</h3>
+  <div class="highlight-box blue">
+    <div class="title">ルールで拾えなかった「行間」を読む</div>
+    <ul>
+      <li>ステップ2で整形・フィルタ済みのテキストをAIに渡す</li>
+      <li>AIは文脈を読んで、ルールでは拾えない情報を抽出</li>
+      <li>1回目で何も見つからなかったページだけ、2回目の再スキャンを実施</li>
+      <li>各抽出結果に「確信度」スコア（0〜100%）がつく</li>
+    </ul>
+  </div>
+
+  <h3>ステップ4：統合 → 最終出力</h3>
+  <div class="highlight-box orange">
+    <div class="title">ルール結果＋AI結果を1つにまとめる</div>
+    <ul>
+      <li>ルールで拾った情報を基盤にする（確実な情報が土台）</li>
+      <li>AIが拾った情報を追加する（ルール結果を上書きしない）</li>
+      <li>重複を排除して、最終的な Excel ファイルを出力</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ==================== 8. 自社AIプロジェクトへの提案 ==================== -->
+<section>
+  <h2>8. 自社AIプロジェクトへの適用提案</h2>
+
+  <p>現在の自社AIプロジェクトに、ルールベースの前処理を導入する場合のステップです。</p>
+
+  <div class="step-row">
+    <span class="step-num">1</span>
+    <div class="step-content">
+      <strong>頻出キーワードのリストアップ</strong>
+      <p>過去の抽出結果を分析し、毎回拾うべき「決まったキーワード」をリスト化します。<br>
+      （例：アレルギー、車椅子、VIP、禁煙、記念日 など）</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <span class="step-num">2</span>
+    <div class="step-content">
+      <strong>除外パターンの定義</strong>
+      <p>AIに渡す必要がない情報（経理データ、保険情報、社内メモ）のパターンを定義します。<br>
+      これだけでもAIの精度は向上します。</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <span class="step-num">3</span>
+    <div class="step-content">
+      <strong>ルール抽出 → AI補完の2段パイプラインを構築</strong>
+      <p>ルールで拾えたものは「確定情報」としてAIに伝え、<br>
+      AIには「これ以外に見落としがないか確認して」と依頼する構成にします。</p>
+    </div>
+  </div>
+
+  <div class="step-row">
+    <span class="step-num">4</span>
+    <div class="step-content">
+      <strong>キーワードの継続的追加</strong>
+      <p>AIが新しく拾った情報のうち、頻出するものはルールに昇格させます。<br>
+      これにより、ルールの網羅率が徐々に上がり、AIへの依存度が下がります。</p>
+    </div>
+  </div>
+
+  <div class="analogy">
+    <div class="label">たとえ話：業務マニュアルの改善サイクル</div>
+    <p>
+      最初は「気づいたら報告」（＝AIだけ）だった業務を、<br>
+      よくある事例をマニュアル化（＝ルール化）して、<br>
+      マニュアルに載ってない例外だけ上司判断（＝AI）にする。<br>
+      さらに、例外が繰り返されたらマニュアルに追加する。<br>
+      <strong>これが「ルール＋AI」の改善サイクルです。</strong>
+    </p>
+  </div>
+</section>
+
+<!-- ==================== まとめ ==================== -->
+<div class="summary-section">
+  <h2>まとめ</h2>
+
+  <div class="point">
+    <div class="icon">1.</div>
+    <p><strong>AIだけに頼ると、抜け漏れ・バラつき・コスト高の3つの問題が同時に起きる</strong></p>
+  </div>
+
+  <div class="point">
+    <div class="icon">2.</div>
+    <p><strong>ルールベースの前処理を入れることで、「確実に拾えるもの」は100%確実に拾える</strong>
+    <br>キーワード照合は一瞬で完了し、結果も毎回同じ</p>
+  </div>
+
+  <div class="point">
+    <div class="icon">3.</div>
+    <p><strong>AIは「ルールで拾えなかった部分」だけに集中するため、精度が上がりコストも下がる</strong>
+    <br>AIの得意分野（文脈理解・曖昧な表現の解釈）を活かせる</p>
+  </div>
+
+  <div class="point">
+    <div class="icon">4.</div>
+    <p><strong>ルール＋AIの組み合わせで、抽出率を70〜85% → 90%以上に改善できる</strong>
+    <br>問題発生時の原因追跡も容易になる</p>
+  </div>
+
+  <div class="point">
+    <div class="icon">5.</div>
+    <p><strong>導入は段階的に可能</strong>：まずキーワードリスト作成から始めて、徐々にルールを充実させる</p>
+  </div>
+</div>
+
+<!-- ==================== FAQ ==================== -->
+<section>
+  <h2>よくある質問</h2>
+
+  <h3>Q. ルールの作成にはプログラミングの知識が必要ですか？</h3>
+  <div class="highlight-box green">
+    <p>ルールの<strong>設計（どんなキーワードを拾うか）</strong>にはプログラミング知識は不要です。<br>
+    「アレルギー」「車椅子」のように、業務で重要なキーワードをリストアップするのは現場の方の得意分野です。<br>
+    そのリストをコードに反映するのはエンジニアの仕事ですが、1キーワードあたり1行追加するだけです。</p>
+  </div>
+
+  <h3>Q. AIを使わず、ルールだけではダメですか？</h3>
+  <div class="highlight-box blue">
+    <p>ルールだけでも7〜8割はカバーできますが、残りの2〜3割は<strong>文脈依存の情報</strong>です。<br>
+    「足が弱い」→ 移動介助、「25周年」→ 記念日対応、のように<strong>意味を理解する必要がある情報</strong>は、<br>
+    キーワード照合では拾えません。ここがAIの出番です。</p>
+  </div>
+
+  <h3>Q. 導入コストはどれくらいですか？</h3>
+  <div class="highlight-box orange">
+    <p>既存のAI処理パイプラインの「前」にルール処理を追加する形なので、<br>
+    既存システムの大幅な改修は不要です。<br>
+    むしろ、AIへのAPI呼び出し量が減るため、<strong>ランニングコストは下がる</strong>ことが期待できます。</p>
+  </div>
+
+  <h3>Q. 新しいキーワードが出てきたらどうしますか？</h3>
+  <div class="highlight-box green">
+    <p>AIが新たに拾った情報のうち、頻繁に出現するものはルールに追加します。<br>
+    これにより、ルールの網羅率は時間とともに上がり続けます。<br>
+    <strong>「AIが発見 → ルールに昇格」の改善サイクル</strong>で、システムは使うほど賢くなります。</p>
+  </div>
+</section>
+
+</div><!-- /.container -->
+</body>
+</html>

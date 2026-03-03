@@ -1,0 +1,97 @@
+{
+  "input_mode": "files",
+  "input_files_sha256": {
+    "rooming": "d4fc1da7be984b5ef291a204e517175e303faba742607f1aa513d0857f8e04be",
+    "passenger": "0cfe5824d586daec452894c9919da6e614daf1275f14d24c0308af86a0bc5638",
+    "messagelist": "f073ecfae28d64a4f2d89084ee32bafe553749660505382faefc4f8dd3a4d3ba"
+  },
+  "llm_extraction": {
+    "provider": "none",
+    "success": false,
+    "item_count": 0
+  },
+  "counts": {
+    "total_guests": 9,
+    "matched": 0,
+    "unmatched": 18
+  },
+  "issues": [
+    {
+      "level": "warning",
+      "code": "op_rq_pending",
+      "message": "OPがRQのまま未確定の記載があります。"
+    },
+    {
+      "level": "warning",
+      "code": "op_rq_pending",
+      "message": "OPがRQのまま未確定の記載があります。"
+    },
+    {
+      "level": "warning",
+      "code": "op_rq_pending",
+      "message": "OPがRQのまま未確定の記載があります。"
+    },
+    {
+      "level": "warning",
+      "code": "missing_guest_data",
+      "message": "データ欠落: passport_no, issue_date, expiry_date"
+    },
+    {
+      "level": "warning",
+      "code": "missing_guest_data",
+      "message": "データ欠落: passport_no, issue_date, expiry_date"
+    },
+    {
+      "level": "warning",
+      "code": "missing_guest_data",
+      "message": "データ欠落: passport_no, issue_date, expiry_date"
+    },
+    {
+      "level": "warning",
+      "code": "missing_guest_data",
+      "message": "データ欠落: passport_no, issue_date, expiry_date"
+    },
+    {
+      "level": "warning",
+      "code": "missing_guest_data",
+      "message": "データ欠落: passport_no, issue_date, expiry_date"
+    },
+    {
+      "level": "warning",
+      "code": "missing_guest_data",
+      "message": "データ欠落: expiry_date"
+    },
+    {
+      "level": "warning",
+      "code": "missing_guest_data",
+      "message": "データ欠落: passport_no, expiry_date"
+    },
+    {
+      "level": "warning",
+      "code": "missing_guest_data",
+      "message": "データ欠落: passport_no, issue_date, expiry_date"
+    },
+    {
+      "level": "warning",
+      "code": "missing_guest_data",
+      "message": "データ欠落: passport_no, issue_date, expiry_date"
+    },
+    {
+      "level": "warning",
+      "code": "rooms_mismatch_total",
+      "message": "Total Rooms不一致: 申告=7 出力=5"
+    },
+    {
+      "level": "warning",
+      "code": "rooms_mismatch_by_type",
+      "message": "TWN部屋数不一致: 申告=6 出力=4"
+    },
+    {
+      "level": "warning",
+      "code": "rooms_mismatch_by_type",
+      "message": "SGL部屋数不一致: 申告=1 出力=0"
+    }
+  ],
+  "guest_count": 9,
+  "status": "completed"
+}

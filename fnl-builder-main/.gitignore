@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+tests/e2e/fixtures/*/output.xlsx
+
+# Generated test outputs
+final_list_test*.xlsx
+audit_test*.json
+.DS_Store

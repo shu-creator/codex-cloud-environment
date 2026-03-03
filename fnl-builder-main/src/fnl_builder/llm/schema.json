@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ML LLM output schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["items"],
+  "properties": {
+    "items": {
+      "type": "array",
+      "maxItems": 500,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "category",
+          "phase",
+          "summary",
+          "handoff_text",
+          "explicitness",
+          "urgency",
+          "confidence",
+          "severity",
+          "caution_reason",
+          "evidence_match",
+          "evidence",
+          "who_id"
+        ],
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": [
+              "medical_health",
+              "dietary",
+              "mobility_accessibility",
+              "accommodation_room",
+              "grouping_companion",
+              "vip_sensitive",
+              "schedule_change_separation",
+              "documents_immigration",
+              "communication_language",
+              "baggage_equipment",
+              "other"
+            ]
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "pre_departure",
+              "departure_airport",
+              "flight",
+              "arrival_airport",
+              "transfer",
+              "on_tour",
+              "hotel_stay",
+              "meal_time",
+              "free_time_optional",
+              "return_trip",
+              "unknown"
+            ]
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 240
+          },
+          "handoff_text": {
+            "type": ["string", "null"],
+            "maxLength": 240
+          },
+          "explicitness": {
+            "type": "string",
+            "enum": ["explicit", "implicit", "unclear"]
+          },
+          "urgency": {
+            "type": "string",
+            "enum": ["high", "medium", "low", "unknown"]
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["error", "warning", "caution"]
+          },
+          "caution_reason": {
+            "type": "string",
+            "maxLength": 240
+          },
+          "evidence_match": {
+            "type": "boolean"
+          },
+          "evidence": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["page", "quote"],
+            "properties": {
+              "page": {
+                "type": ["integer", "null"],
+                "minimum": 1,
+                "maximum": 10000,
+                "description": "PDF: 必須（1始まり）、CSV: null可"
+              },
+              "quote": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 600
+              }
+            }
+          },
+          "who_id": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
