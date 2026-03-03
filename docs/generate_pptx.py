@@ -77,9 +77,9 @@ def add_section_slide(prs, section_num, section_title, bg_color=BLUE):
     return slide
 
 
-def add_content_slide(prs, title, body_items, title_color=BLUE, bullet_color=BLACK):
+def add_content_slide(prs, title, body_items, title_color=BLUE, bullet_color=BLACK, bg_color=SLIDE_BG):
     slide = prs.slides.add_slide(prs.slide_layouts[6])
-    set_slide_bg(slide, WHITE)
+    set_slide_bg(slide, bg_color)
 
     # タイトル
     txBox = slide.shapes.add_textbox(Inches(0.6), Inches(0.3), Inches(11.8), Inches(0.8))
@@ -130,9 +130,9 @@ def add_content_slide(prs, title, body_items, title_color=BLUE, bullet_color=BLA
 
 
 def add_two_column_slide(prs, title, left_title, left_items, right_title, right_items,
-                         left_color=GREEN, right_color=BLUE):
+                         left_color=GREEN, right_color=BLUE, bg_color=SLIDE_BG):
     slide = prs.slides.add_slide(prs.slide_layouts[6])
-    set_slide_bg(slide, WHITE)
+    set_slide_bg(slide, bg_color)
 
     # タイトル
     txBox = slide.shapes.add_textbox(Inches(0.6), Inches(0.3), Inches(11.8), Inches(0.8))
@@ -181,9 +181,9 @@ def add_two_column_slide(prs, title, left_title, left_items, right_title, right_
     return slide
 
 
-def add_table_slide(prs, title, headers, rows, title_color=BLUE):
+def add_table_slide(prs, title, headers, rows, title_color=BLUE, bg_color=SLIDE_BG):
     slide = prs.slides.add_slide(prs.slide_layouts[6])
-    set_slide_bg(slide, WHITE)
+    set_slide_bg(slide, bg_color)
 
     txBox = slide.shapes.add_textbox(Inches(0.6), Inches(0.3), Inches(11.8), Inches(0.7))
     tf = txBox.text_frame
@@ -229,10 +229,10 @@ def add_table_slide(prs, title, headers, rows, title_color=BLUE):
     return slide
 
 
-def add_flow_slide(prs, title, steps, colors=None):
+def add_flow_slide(prs, title, steps, colors=None, bg_color=SLIDE_BG):
     """縦方向のフロー図スライド"""
     slide = prs.slides.add_slide(prs.slide_layouts[6])
-    set_slide_bg(slide, WHITE)
+    set_slide_bg(slide, bg_color)
 
     txBox = slide.shapes.add_textbox(Inches(0.6), Inches(0.3), Inches(11.8), Inches(0.7))
     tf = txBox.text_frame
@@ -551,18 +551,135 @@ def create_rules_pptx():
 
 
 # ══════════════════════════════════════════════════════════
-# PPTX 2: Web UI 操作手順書
+# PPTX 2: Web UI 操作手順書（スクリーンショット付き）
 # ══════════════════════════════════════════════════════════
+def _add_screenshot_slide(prs, step_label, title, bullets, img_path,
+                          img_on_right=True, caption=""):
+    """テキスト＋スクリーンショットの2カラムスライドを追加する.
+
+    img_on_right=True  → 左テキスト / 右スクショ
+    img_on_right=False → 上テキスト / 下スクショ（横長画像向け）
+    """
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    set_slide_bg(slide, SLIDE_BG)
+
+    # ── ステップラベル（左上バッジ） ──
+    badge = slide.shapes.add_shape(5, Inches(0.4), Inches(0.25), Inches(1.6), Inches(0.5))
+    badge.fill.solid()
+    badge.fill.fore_color.rgb = BLUE
+    badge.line.fill.background()
+    btf = badge.text_frame
+    btf.paragraphs[0].text = step_label
+    btf.paragraphs[0].font.size = Pt(14)
+    btf.paragraphs[0].font.bold = True
+    btf.paragraphs[0].font.color.rgb = WHITE
+    btf.paragraphs[0].alignment = PP_ALIGN.CENTER
+
+    if img_on_right:
+        # ── 左カラム: タイトル + 箇条書き ──
+        txBox = slide.shapes.add_textbox(Inches(0.4), Inches(0.9), Inches(5.6), Inches(6.2))
+        tf = txBox.text_frame
+        tf.word_wrap = True
+
+        p = tf.paragraphs[0]
+        p.text = title
+        p.font.size = Pt(22)
+        p.font.bold = True
+        p.font.color.rgb = DARK_BLUE
+        p.space_after = Pt(12)
+
+        for item in bullets:
+            bp = tf.add_paragraph()
+            if isinstance(item, tuple):
+                text, size, bold, color = item
+            else:
+                text, size, bold, color = item, Pt(14), False, BLACK
+            bp.text = text
+            bp.font.size = size
+            bp.font.bold = bold
+            bp.font.color.rgb = color
+            bp.space_after = Pt(4)
+
+        # ── 右カラム: スクリーンショット (白背景カード風) ──
+        card = slide.shapes.add_shape(
+            5, Inches(6.3), Inches(0.8), Inches(6.7), Inches(5.9)
+        )
+        card.fill.solid()
+        card.fill.fore_color.rgb = WHITE
+        card.line.color.rgb = RGBColor(0xD1, 0xD5, 0xDB)
+        card.line.width = Pt(1)
+        card.shadow.inherit = False
+
+        if Path(img_path).exists():
+            slide.shapes.add_picture(
+                str(img_path),
+                Inches(6.5), Inches(1.0), Inches(6.3), Inches(5.2)
+            )
+    else:
+        # ── 上部: タイトル + 箇条書き ──
+        txBox = slide.shapes.add_textbox(Inches(0.4), Inches(0.9), Inches(12.5), Inches(2.0))
+        tf = txBox.text_frame
+        tf.word_wrap = True
+
+        p = tf.paragraphs[0]
+        p.text = title
+        p.font.size = Pt(22)
+        p.font.bold = True
+        p.font.color.rgb = DARK_BLUE
+        p.space_after = Pt(8)
+
+        for item in bullets:
+            bp = tf.add_paragraph()
+            if isinstance(item, tuple):
+                text, size, bold, color = item
+            else:
+                text, size, bold, color = item, Pt(14), False, BLACK
+            bp.text = text
+            bp.font.size = size
+            bp.font.bold = bold
+            bp.font.color.rgb = color
+            bp.space_after = Pt(3)
+
+        # ── 下部: スクリーンショット（横長・中央配置） ──
+        card = slide.shapes.add_shape(
+            5, Inches(0.8), Inches(3.1), Inches(11.7), Inches(4.2)
+        )
+        card.fill.solid()
+        card.fill.fore_color.rgb = WHITE
+        card.line.color.rgb = RGBColor(0xD1, 0xD5, 0xDB)
+        card.line.width = Pt(1)
+
+        if Path(img_path).exists():
+            slide.shapes.add_picture(
+                str(img_path),
+                Inches(1.0), Inches(3.3), Inches(11.3), Inches(3.8)
+            )
+
+    # ── キャプション ──
+    if caption:
+        cap_box = slide.shapes.add_textbox(Inches(6.3), Inches(6.85), Inches(6.7), Inches(0.4))
+        ctf = cap_box.text_frame
+        ctf.paragraphs[0].text = caption
+        ctf.paragraphs[0].font.size = Pt(10)
+        ctf.paragraphs[0].font.color.rgb = GRAY
+        ctf.paragraphs[0].alignment = PP_ALIGN.CENTER
+
+    return slide
+
+
 def create_tutorial_pptx():
     prs = Presentation()
     prs.slide_width = Inches(13.333)
     prs.slide_height = Inches(7.5)
 
+    ss_dir = OUT_DIR / "screenshots"
+
+    # ── 表紙 ──
     add_title_slide(prs,
         "fnl-builder Web UI 操作手順書",
         "現場担当者向け 操作レクチャー資料\n作成日: 2026-03-03")
 
-    # 事前準備
+    # ── 事前準備 ──
     add_content_slide(prs, "事前準備 ─ 用意するファイル", [
         ("操作を開始する前に、以下の3種類のファイルを手元に用意してください。", Pt(16), False, BLACK, 0),
         ("", Pt(8), False, BLACK, 0),
@@ -579,8 +696,8 @@ def create_tutorial_pptx():
         ("   例: 1027_E417_MessageList(CSV).csv", Pt(14), False, PURPLE, 0),
     ])
 
-    # 全体フロー
-    add_flow_slide(prs, "操作の全体フロー（6ステップ）", [
+    # ── 全体フロー ──
+    add_flow_slide(prs, "操作の全体フロー", [
         ("Step 1: Web UIを開く", "ブラウザでlocalhostにアクセス"),
         ("Step 2-4: 3種類のファイルをアップロード", "RoomingList → PassengerList → MessageList"),
         ("Step 5: LLM Providerを確認", "通常は openai のまま"),
@@ -589,83 +706,160 @@ def create_tutorial_pptx():
         ("Step 9: Excel をダウンロード", "final_list-*.xlsx が自動ダウンロード"),
     ], [BLUE, GREEN, GRAY, RED, ORANGE, PURPLE])
 
-    # 手順1
-    add_content_slide(prs, "手順 1: Web UIを開く", [
-        ("ブラウザのアドレスバーに localhost の URL を入力してアクセスします。", Pt(16), False, BLACK, 0),
-        ("", Pt(8), False, BLACK, 0),
-        ("左側のサイドバーに以下の4つの入力エリアがあることを確認:", Pt(16), True, BLACK, 0),
-        ("", Pt(8), False, BLACK, 0),
-        ("  RoomingList PDF ─ ルーミングリスト用のアップロードエリア", Pt(15), False, BLACK, 0),
-        ("  PassengerList PDF ─ パッセンジャーリスト用のアップロードエリア", Pt(15), False, BLACK, 0),
-        ("  MessageList PDF/CSV ─ メッセージリスト用のアップロードエリア", Pt(15), False, BLACK, 0),
-        ("  LLM Provider ─ LLMプロバイダーの選択ドロップダウン", Pt(15), False, BLACK, 0),
-        ("", Pt(8), False, BLACK, 0),
-        ("一番下に赤い「実行」ボタンがあります。", Pt(16), True, RED, 0),
-    ])
+    # ── Step 1: 初期画面 ──
+    _add_screenshot_slide(prs, "Step 1", "Web UIを開く", [
+        "ブラウザのアドレスバーに URL を入力してアクセスします。",
+        "",
+        ("左側のサイドバーに4つの入力エリアが表示されます:", Pt(15), True, BLACK),
+        "  RoomingList PDF",
+        "  PassengerList PDF",
+        "  MessageList PDF/CSV",
+        "  LLM Provider（ドロップダウン）",
+        "",
+        ("一番下に赤い「実行」ボタンがあります。", Pt(15), True, RED),
+    ], ss_dir / "step1_initial.png",
+    caption="初期画面 ─ サイドバーにファイル入力エリアが並ぶ")
 
-    # 手順2-4
-    add_content_slide(prs, "手順 2-4: ファイルをアップロード", [
-        ("各エリアの「Browse files」ボタンをクリックし、ファイルを選択します。", Pt(16), False, BLACK, 0),
-        ("", Pt(8), False, BLACK, 0),
-        ("手順 2: RoomingList PDF", Pt(18), True, BLUE, 0),
-        ("   「RoomingList PDF」セクション → Browse files → PDF選択", Pt(15), False, BLACK, 0),
-        ("   アップロード完了: ファイル名とサイズが表示される", Pt(14), False, GRAY, 0),
-        ("", Pt(8), False, BLACK, 0),
-        ("手順 3: PassengerList PDF", Pt(18), True, BLUE, 0),
-        ("   「PassengerList PDF」セクション → Browse files → PDF選択", Pt(15), False, BLACK, 0),
-        ("", Pt(8), False, BLACK, 0),
-        ("手順 4: MessageList PDF/CSV", Pt(18), True, BLUE, 0),
-        ("   「MessageList PDF/CSV」セクション → Browse files → ファイル選択", Pt(15), False, BLACK, 0),
-        ("", Pt(8), False, BLACK, 0),
-        ("【注意】3種類すべてのファイルをアップロードしてから「実行」を押してください", Pt(16), True, ORANGE, 0),
-    ])
+    # ── Step 2: Rooming 選択 ──
+    _add_screenshot_slide(prs, "Step 2", "RoomingList PDF をアップロード", [
+        "「RoomingList PDF」セクションの",
+        ("「Browse files」ボタンをクリック", Pt(15), True, BLUE),
+        "",
+        "ファイル選択ダイアログが開きます。",
+        "用意した RoomingList PDF を選択してください。",
+        "",
+        ("例: 1027_E417_ROOMINGLIST.pdf", Pt(13), False, PURPLE),
+    ], ss_dir / "step2_select_rooming.png",
+    caption="Browse files でファイル選択ダイアログが開く")
 
-    # 手順5-6
-    add_content_slide(prs, "手順 5-6: 確認して「実行」", [
-        ("手順 5: LLM Provider を確認", Pt(20), True, BLUE, 0),
-        ("   サイドバー最下部のドロップダウンを確認", Pt(15), False, BLACK, 0),
-        ("   通常は openai が選択されています。変更不要。", Pt(15), False, GRAY, 0),
-        ("", Pt(10), False, BLACK, 0),
-        ("手順 6: 赤い「実行」ボタンをクリック", Pt(20), True, RED, 0),
-        ("   処理開始後、以下の3工程が順に実行されます:", Pt(15), False, BLACK, 0),
-        ("", Pt(6), False, BLACK, 0),
-        ("   1. parse_stage: PDF/CSVの解析、テキスト抽出", Pt(15), False, BLACK, 0),
-        ("   2. integrate_stage: LLM による特記事項の構造化抽出 + ルールベース統合", Pt(15), False, BLACK, 0),
-        ("   3. render_stage: 最終名簿の生成、Excel出力", Pt(15), False, BLACK, 0),
-        ("", Pt(10), False, BLACK, 0),
-        ("【注意】処理中はブラウザのタブを閉じたり、ページを更新しないでください", Pt(16), True, ORANGE, 0),
-    ])
+    # ── Step 2 結果: アップロード完了 ──
+    _add_screenshot_slide(prs, "Step 2", "RoomingList アップロード完了", [
+        "アップロードが完了すると、",
+        ("ファイル名とサイズが表示されます。", Pt(15), True, GREEN),
+        "",
+        "表示を確認したら次のファイルに進みます。",
+    ], ss_dir / "step3_rooming_uploaded.png",
+    caption="アップロード完了 ─ ファイル名が表示される")
 
-    # 手順7-8
-    add_content_slide(prs, "手順 7-8: 結果確認＆バリデーション", [
-        ("手順 7: 結果テーブルを確認", Pt(20), True, BLUE, 0),
-        ("   メイン画面にツアー情報と名簿テーブルが表示されます", Pt(15), False, BLACK, 0),
-        ("   表示カラム: room_type / number / inquiry / family_name / given_name / remarks", Pt(14), False, GRAY, 0),
-        ("   remarks カラムが最終Excel に反映される特記事項です", Pt(14), False, GRAY, 0),
-        ("", Pt(10), False, BLACK, 0),
-        ("手順 8: バリデーション警告を確認", Pt(20), True, ORANGE, 0),
-        ("   テーブル下部に黄色/オレンジの警告が表示される場合があります:", Pt(15), False, BLACK, 0),
-        ("", Pt(6), False, BLACK, 0),
-        ("   [missing_guest_data] → パスポート情報が未入力のゲストがいる", Pt(14), False, BLACK, 0),
-        ("   [rooms_mismatch_total] → 部屋数合計が申告数と不一致", Pt(14), False, BLACK, 0),
-        ("   [rooms_mismatch_by_type] → 部屋タイプ別の数が不一致", Pt(14), False, BLACK, 0),
-        ("", Pt(10), False, BLACK, 0),
-        ("警告が出ても処理は完了。出力Excelは生成されます。内容を必ず目視チェック。", Pt(15), True, RED, 0),
-    ])
+    # ── Step 3: Passenger 選択 ──
+    _add_screenshot_slide(prs, "Step 3", "PassengerList PDF をアップロード", [
+        "「PassengerList PDF」セクションの",
+        ("「Browse files」ボタンをクリック", Pt(15), True, BLUE),
+        "",
+        "乗客名簿の PDF を選択してください。",
+        "",
+        ("例: 1027_E417_PASSENGERLIST.pdf", Pt(13), False, PURPLE),
+    ], ss_dir / "step4_select_passenger.png",
+    caption="PassengerList のファイル選択")
 
-    # 手順9
-    add_content_slide(prs, "手順 9: Excel ファイルをダウンロード", [
-        ("処理完了後、ブラウザのダウンロード通知が表示されます。", Pt(16), False, BLACK, 0),
-        ("", Pt(8), False, BLACK, 0),
-        ("ダウンロードされるファイル:", Pt(18), True, BLUE, 0),
-        ("   final_list-*.xlsx（最終名簿 Excel）", Pt(16), False, PURPLE, 0),
-        ("   ※末尾の数字は連番（同セッション内で複数回実行した場合に増加）", Pt(14), False, GRAY, 0),
-        ("", Pt(10), False, BLACK, 0),
-        ("以上で操作は完了です！", Pt(22), True, GREEN, 0),
-        ("ダウンロードされた Excel ファイルを開き、特記事項の内容を確認してください。", Pt(16), False, BLACK, 0),
-    ])
+    # ── Step 3 結果 ──
+    _add_screenshot_slide(prs, "Step 3", "PassengerList アップロード完了", [
+        "アップロードが完了すると、",
+        ("ファイル名とサイズが表示されます。", Pt(15), True, GREEN),
+    ], ss_dir / "step5_passenger_uploaded.png",
+    caption="PassengerList アップロード完了")
 
-    # ファイル命名規則
+    # ── Step 4: MessageList 選択 ──
+    _add_screenshot_slide(prs, "Step 4", "MessageList PDF/CSV をアップロード", [
+        "「MessageList PDF/CSV」セクションの",
+        ("「Browse files」ボタンをクリック", Pt(15), True, BLUE),
+        "",
+        "メッセージリストのファイルを選択してください。",
+        "PDF でも CSV でも対応しています。",
+        "",
+        ("例: 1027_E417_MessageList(CSV).csv", Pt(13), False, PURPLE),
+    ], ss_dir / "step6_select_messagelist.png",
+    caption="MessageList のファイル選択（PDF/CSV 両対応）")
+
+    # ── 3ファイル全てアップロード完了 ──
+    _add_screenshot_slide(prs, "Step 2-4", "3種類すべてのファイルをアップロード完了", [
+        ("3つのファイルがすべてアップロードされた状態です。", Pt(15), True, GREEN),
+        "",
+        "各セクションにファイル名が表示されていることを確認してください。",
+        "",
+        ("【重要】", Pt(15), True, ORANGE),
+        "3種類すべてのファイルをアップロードしてから",
+        "「実行」を押してください。",
+    ], ss_dir / "step7_all_uploaded.png",
+    caption="全ファイルアップロード完了状態")
+
+    # ── Step 5-6: 実行 ──
+    _add_screenshot_slide(prs, "Step 5-6", "LLM Providerを確認して「実行」", [
+        ("LLM Provider:", Pt(16), True, BLUE),
+        "  サイドバー最下部のドロップダウンを確認",
+        "  通常は openai が選択済み。変更不要。",
+        "",
+        ("赤い「実行」ボタンをクリック", Pt(16), True, RED),
+        "",
+        "処理開始後の3工程:",
+        "  1. parse_stage: PDF/CSV解析",
+        "  2. integrate_stage: LLM + ルールベース統合",
+        "  3. render_stage: Excel出力",
+        "",
+        ("【注意】処理中はタブを閉じたり更新しないでください", Pt(14), True, ORANGE),
+    ], ss_dir / "step8_click_run.png",
+    caption="「実行」ボタンで処理開始")
+
+    # ── Step 7: 結果テーブル ──
+    _add_screenshot_slide(prs, "Step 7", "結果テーブルを確認", [
+        "処理完了後、メイン画面にツアー情報と",
+        ("名簿テーブルが表示されます。", Pt(15), True, BLUE),
+        "",
+        "表示カラム:",
+        "  room_type / number / inquiry",
+        "  family_name / given_name / remarks",
+        "",
+        ("remarks カラムが最終Excelに", Pt(14), True, BLACK),
+        ("反映される特記事項です。", Pt(14), True, BLACK),
+    ], ss_dir / "step9_result_table.png",
+    caption="結果テーブル ─ remarks が特記事項")
+
+    # ── Step 8: バリデーション ──
+    _add_screenshot_slide(prs, "Step 8", "バリデーション警告を確認", [
+        "テーブル下部に警告が表示される場合があります:",
+        "",
+        ("  [missing_guest_data]", Pt(14), True, ORANGE),
+        "    → パスポート情報が未入力のゲストがいる",
+        "",
+        ("  [rooms_mismatch_total]", Pt(14), True, ORANGE),
+        "    → 部屋数合計が申告数と不一致",
+        "",
+        ("  [rooms_mismatch_by_type]", Pt(14), True, ORANGE),
+        "    → 部屋タイプ別の数が不一致",
+        "",
+        ("警告が出ても処理は完了。", Pt(14), True, RED),
+        ("出力Excelは生成されます。内容を必ず目視チェック。", Pt(14), True, RED),
+    ], ss_dir / "step10_validation.png",
+    caption="バリデーション警告の例")
+
+    # ── 処理中画面 ──
+    _add_screenshot_slide(prs, "参考", "処理中の画面", [
+        "「実行」ボタン押下後、",
+        "処理の進行状況が表示されます。",
+        "",
+        ("処理には数十秒〜数分かかる場合があります。", Pt(14), True, BLACK),
+        "",
+        "進行バーやステータス表示で",
+        "現在の処理段階を確認できます。",
+    ], ss_dir / "step11_processing.png",
+    caption="処理中画面 ─ 進行状況の表示")
+
+    # ── Step 9: ダウンロード ──
+    _add_screenshot_slide(prs, "Step 9", "Excel ファイルをダウンロード", [
+        "処理完了後、ダウンロード通知が表示されます。",
+        "",
+        ("ダウンロードされるファイル:", Pt(16), True, BLUE),
+        ("  final_list-*.xlsx", Pt(15), True, PURPLE),
+        "  （最終名簿 Excel）",
+        "",
+        "※末尾の数字は連番です。",
+        "",
+        ("以上で操作は完了です！", Pt(18), True, GREEN),
+        "Excelを開き、特記事項の内容を確認してください。",
+    ], ss_dir / "step12_download.png",
+    caption="完了 ─ Excel ファイルのダウンロード")
+
+    # ── ファイル命名規則 ──
     add_table_slide(prs, "入力ファイルの命名規則",
         ["種別", "命名パターン", "例"],
         [
@@ -675,7 +869,7 @@ def create_tutorial_pptx():
             ["MessageList (PDF)", "{受付番号}_{コース}_MessageList.pdf", "1027_E417_MessageList.pdf"],
         ])
 
-    # トラブルシューティング
+    # ── トラブルシューティング ──
     add_table_slide(prs, "よくある問題と対処法",
         ["症状", "原因", "対処法"],
         [
