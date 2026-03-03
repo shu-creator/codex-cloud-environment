@@ -230,7 +230,7 @@ def add_table_slide(prs, title, headers, rows, title_color=BLUE, bg_color=SLIDE_
 
 
 def add_flow_slide(prs, title, steps, colors=None, bg_color=SLIDE_BG):
-    """縦方向のフロー図スライド"""
+    """縦方向のフロー図スライド（ステップ数に応じて自動スケーリング）"""
     slide = prs.slides.add_slide(prs.slide_layouts[6])
     set_slide_bg(slide, bg_color)
 
@@ -246,19 +246,41 @@ def add_flow_slide(prs, title, steps, colors=None, bg_color=SLIDE_BG):
     if colors is None:
         colors = [BLUE] * len(steps)
 
+    n = len(steps)
     box_width = Inches(8)
-    box_height = Inches(0.9)
-    x_start = Inches(3)
-    y_start = Inches(1.4)
-    gap = Inches(0.15)
+    x_start = Inches(2.7)
+    y_start = Inches(1.3)
+    y_end = Inches(7.2)  # スライド下端のマージン
+    available = y_end - y_start
+
+    # ステップ数に応じてボックス高さと矢印スペースを動的計算
+    # available = n * box_height + (n-1) * arrow_space
+    # arrow_space は box_height の 40% とする
+    # available = n * bh + (n-1) * 0.4 * bh = bh * (n + 0.4*(n-1))
+    factor = n + 0.4 * (n - 1)
+    box_height_emu = int(available / factor)
+    arrow_space_emu = int(box_height_emu * 0.4)
+
+    # ボックスの最大/最小制限
+    max_box = Inches(0.95)
+    min_box = Inches(0.55)
+    box_height_emu = max(min_box, min(max_box, box_height_emu))
+
+    # 矢印スペースの最小
+    min_arrow = Inches(0.2)
+    arrow_space_emu = max(min_arrow, arrow_space_emu)
+
+    # フォントサイズもステップ数に応じて調整
+    title_pt = Pt(15) if n > 4 else Pt(16)
+    desc_pt = Pt(10) if n > 4 else Pt(11)
 
     for i, (step_title, step_desc) in enumerate(steps):
-        y = y_start + i * (box_height + Inches(0.5) + gap)
+        y = y_start + i * (box_height_emu + arrow_space_emu)
 
         # ボックス
         shape = slide.shapes.add_shape(
             5,  # ROUNDED_RECTANGLE
-            x_start, y, box_width, box_height
+            x_start, y, box_width, box_height_emu
         )
         shape.fill.solid()
         shape.fill.fore_color.rgb = colors[i] if i < len(colors) else BLUE
@@ -268,14 +290,14 @@ def add_flow_slide(prs, title, steps, colors=None, bg_color=SLIDE_BG):
         tf_box.word_wrap = True
         tf_box.paragraphs[0].alignment = PP_ALIGN.CENTER
         tf_box.paragraphs[0].text = step_title
-        tf_box.paragraphs[0].font.size = Pt(16)
+        tf_box.paragraphs[0].font.size = title_pt
         tf_box.paragraphs[0].font.bold = True
         tf_box.paragraphs[0].font.color.rgb = WHITE
 
         if step_desc:
             p_desc = tf_box.add_paragraph()
             p_desc.text = step_desc
-            p_desc.font.size = Pt(11)
+            p_desc.font.size = desc_pt
             p_desc.font.color.rgb = RGBColor(0xE0, 0xE0, 0xE0)
             p_desc.alignment = PP_ALIGN.CENTER
 
@@ -283,12 +305,12 @@ def add_flow_slide(prs, title, steps, colors=None, bg_color=SLIDE_BG):
         if i < len(steps) - 1:
             arrow_box = slide.shapes.add_textbox(
                 x_start + box_width // 2 - Inches(0.3),
-                y + box_height,
-                Inches(0.6), Inches(0.5)
+                y + box_height_emu,
+                Inches(0.6), arrow_space_emu
             )
             atf = arrow_box.text_frame
             atf.paragraphs[0].text = "▼"
-            atf.paragraphs[0].font.size = Pt(20)
+            atf.paragraphs[0].font.size = Pt(16) if n > 4 else Pt(20)
             atf.paragraphs[0].font.color.rgb = GRAY
             atf.paragraphs[0].alignment = PP_ALIGN.CENTER
 
