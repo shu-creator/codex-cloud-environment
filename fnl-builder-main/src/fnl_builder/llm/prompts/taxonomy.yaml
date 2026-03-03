@@ -1,0 +1,174 @@
+taxonomy_version: "1.0.0"
+status: "active"
+owner: "10-01-ml-spec"
+last_updated: "2026-03-01"
+description: >
+  ML(PDF)から抽出する「特記事項」の分類定義。
+  category と phase の値は本ファイルを正本とする。
+  taxonomyの変更はPRで管理し、必要なら decision_log.md に追記する。
+
+notes:
+  - category は原則として1つに正規化する（迷う場合は other を選び、summary に情報を残す）
+  - phase は「実際に対応が必要になる場面」を優先して選ぶ（不明なら unknown）
+  - 判断が曖昧でも、必ず evidence(page, quote) に紐づける（根拠なしの推測は禁止）
+
+categories:
+  - id: medical_health
+    label: "医療/健康"
+    description: "病気、怪我、持病、妊娠、服薬、感染症、要受診、救急対応など"
+    examples:
+      - "持病(喘息)があり吸入薬を携行"
+      - "体調不良のため長距離徒歩は避けたい"
+      - "車椅子利用、段差配慮希望"
+
+  - id: dietary
+    label: "食事制限/アレルギー"
+    description: "アレルギー、宗教/嗜好、ベジタリアン、禁忌食材、特別食など"
+    examples:
+      - "甲殻類アレルギー"
+      - "ハラール対応希望"
+      - "乳製品不可"
+
+  - id: mobility_accessibility
+    label: "移動支援/バリアフリー"
+    description: "車椅子、杖、歩行補助、階段不可、バス乗降補助、座席配慮など"
+    examples:
+      - "階段の多い観光地は回避したい"
+      - "バス前方席を希望"
+      - "エレベーター必須"
+
+  - id: accommodation_room
+    label: "宿泊/部屋/ホテル要望"
+    description: "禁煙/喫煙、ベッドタイプ、階層、隣室希望、追加寝具、チェックイン/アウト関連など"
+    examples:
+      - "禁煙室希望"
+      - "ツイン希望、ダブル不可"
+      - "同フロア希望"
+
+  - id: grouping_companion
+    label: "同行/グルーピング"
+    description: "同行者、同室希望、別室希望、グループ行動、親子/家族連動、部屋割りなど"
+    examples:
+      - "Aと同室希望"
+      - "同行グループとして同一行程で扱う"
+      - "家族だが部屋は別にしたい"
+      - "部屋割り：1TWN+1SGL"
+
+  - id: vip_sensitive
+    label: "VIP/要配慮/センシティブ"
+    description: "VIP、要配慮、クレームリスク、取扱注意、情報管理注意、特別贈呈など"
+    examples:
+      - "VIP対応希望"
+      - "フルーツセット/お花/ワイン等の贈呈手配"
+      - "部屋のアップグレード依頼"
+      - "個人情報取扱注意"
+      - "対応は担当者へ事前連絡"
+
+  - id: schedule_change_separation
+    label: "離団/日程変更/途中参加"
+    description: "離団、途中参加、延泊、帰国便変更、現地合流、復路別手配など"
+    examples:
+      - "途中離団予定"
+      - "現地合流(到着便が別)"
+      - "復路は別日で帰国"
+
+  - id: documents_immigration
+    label: "書類/入出国/手続"
+    description: "ビザ、ESTA、入国条件、書類不備、提示物、税関/検疫など"
+    examples:
+      - "ビザ申請中"
+      - "入国時に追加書類が必要"
+      - "パスポート関連の注意"
+
+  - id: communication_language
+    label: "連絡/言語/緊急連絡"
+    description: "通訳要望、言語配慮、緊急連絡先、連絡手段、集合連絡など"
+    examples:
+      - "日本語以外が必要"
+      - "緊急連絡先の指定"
+      - "連絡はメール優先"
+
+  - id: baggage_equipment
+    label: "手荷物/特殊装備"
+    description: "大型荷物、医療機器、スポーツ用品、楽器、取扱注意品など"
+    examples:
+      - "大型スーツケースあり"
+      - "医療機器を携行"
+      - "壊れ物注意"
+
+  - id: other
+    label: "その他/分類不明"
+    description: "上記に当てはまらない、または分類できない特記事項"
+    examples:
+      - "その他の特別な配慮"
+
+phases:
+  - id: pre_departure
+    label: "出発前"
+    description: "事前準備、手続、集合までに対応が必要"
+
+  - id: departure_airport
+    label: "出発空港/集合"
+    description: "空港集合、出国前、搭乗手続周辺"
+
+  - id: flight
+    label: "機内/航空移動"
+    description: "搭乗中、座席配慮、機内での対応"
+
+  - id: arrival_airport
+    label: "到着空港/入国"
+    description: "入国、到着導線、検疫/税関周辺"
+
+  - id: transfer
+    label: "送迎/移動(バス等)"
+    description: "バス、鉄道、車移動、乗降や座席配慮"
+
+  - id: on_tour
+    label: "現地催行中(観光/行程中)"
+    description: "観光地、行程中、ガイド対応が必要"
+
+  - id: hotel_stay
+    label: "ホテル滞在"
+    description: "チェックイン、部屋、滞在中対応"
+
+  - id: meal_time
+    label: "食事"
+    description: "レストラン、食事制限対応が必要"
+
+  - id: free_time_optional
+    label: "自由行動/OP"
+    description: "オプション、自由行動時に影響がある"
+
+  - id: return_trip
+    label: "帰国/解散"
+    description: "復路、帰国時、解散周辺"
+
+  - id: unknown
+    label: "不明/全般"
+    description: "どのフェーズか判断できない、または全般"
+
+scales:
+  explicitness:
+    - id: explicit
+      label: "明示"
+      description: "文章に明確な依頼/条件/禁止として書かれている"
+    - id: implicit
+      label: "含意"
+      description: "直接の依頼ではないが、文脈上ほぼ確実に読み取れる"
+    - id: unclear
+      label: "不明"
+      description: "判断が難しい(人手確認を前提に残す)"
+
+  urgency:
+    - id: high
+      label: "高"
+      description: "放置すると運用・安全・搭乗/宿泊に影響しやすい"
+    - id: medium
+      label: "中"
+      description: "対応が望ましい(要確認)"
+    - id: low
+      label: "低"
+      description: "参考情報、影響が限定的"
+    - id: unknown
+      label: "不明"
+      description: "期限/影響度が判断できない"

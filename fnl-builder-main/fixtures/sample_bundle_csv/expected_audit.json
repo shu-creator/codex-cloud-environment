@@ -1,0 +1,52 @@
+{
+  "input_mode": "files",
+  "input_files_sha256": {
+    "rooming": "9c51fffbe73825ddd1ef5ea1b665a3636f1464acca0973e55ca4e83f77e19b2f",
+    "passenger": "9374313cbd6d3a2a50a3aabdf8620dc982fd8b2b00b5e6ac2f0788be079db9a4",
+    "messagelist": "bb73b3a0f36c1159657c0df02899b24f9322055fddf792f3d2b6bdfdb7165eb7"
+  },
+  "llm_extraction": {
+    "provider": "none",
+    "success": false,
+    "item_count": 0
+  },
+  "counts": {
+    "total_guests": 7,
+    "matched": 0,
+    "unmatched": 12
+  },
+  "issues": [
+    {
+      "level": "warning",
+      "code": "missing_guest_data",
+      "message": "データ欠落: passport_no, expiry_date"
+    },
+    {
+      "level": "warning",
+      "code": "missing_guest_data",
+      "message": "データ欠落: issue_date, expiry_date"
+    },
+    {
+      "level": "warning",
+      "code": "missing_guest_data",
+      "message": "データ欠落: passport_no, issue_date, expiry_date"
+    },
+    {
+      "level": "warning",
+      "code": "missing_guest_data",
+      "message": "データ欠落: issue_date, expiry_date"
+    },
+    {
+      "level": "warning",
+      "code": "rooms_mismatch_total",
+      "message": "Total Rooms不一致: 申告=9 出力=4"
+    },
+    {
+      "level": "warning",
+      "code": "rooms_mismatch_by_type",
+      "message": "TWN部屋数不一致: 申告=8 出力=3"
+    }
+  ],
+  "guest_count": 7,
+  "status": "completed"
+}

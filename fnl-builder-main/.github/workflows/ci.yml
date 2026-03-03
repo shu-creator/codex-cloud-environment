@@ -1,0 +1,76 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ".[dev]"
+
+      - name: Ruff
+        run: ruff check src/ tests/
+
+      - name: Mypy
+        run: mypy src/ --strict
+
+      - name: Pytest
+        run: pytest tests/ -q --tb=short
+
+      - name: Build
+        run: python -m build
+
+  wheel-smoke:
+    runs-on: ubuntu-latest
+    needs: quality
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Build wheel
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
+          python -m build
+
+      - name: Install wheel and smoke
+        run: |
+          pip install dist/*.whl
+          fnl-builder --help
+          fnl-builder --version
+          python -m fnl_builder --help
+          python -m fnl_builder --version
+          python - <<'PY'
+          from importlib.resources import files
+
+          from fnl_builder.llm.prompt_loader import load_prompts, load_taxonomy
+
+          template = files("fnl_builder.render").joinpath("template.xlsx")
+          assert template.read_bytes(), "Bundled template.xlsx is missing or empty"
+
+          prompts = load_prompts(["E417"])
+          assert prompts.system.strip(), "base_system.txt is missing or empty"
+          assert prompts.extract_base.strip(), "base_extract.md is missing or empty"
+          assert prompts.course_supplement.strip(), "course supplement is missing or empty"
+
+          taxonomy = load_taxonomy()
+          assert "categories:" in taxonomy, "taxonomy.yaml missing categories section"
+          assert "phases:" in taxonomy, "taxonomy.yaml missing phases section"
+          print("Wheel resource smoke passed")
+          PY

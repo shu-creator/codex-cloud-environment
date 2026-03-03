@@ -1,0 +1,116 @@
+{
+  "guest_count": 9,
+  "stats": {
+    "candidates": 18,
+    "applied": 0,
+    "fallback": 18
+  },
+  "guests": [
+    {
+      "inquiry_main": "0067621009",
+      "inquiry_branch": null,
+      "family_name": "HANKYU",
+      "given_name": "HANAKO",
+      "room_type": "TWN",
+      "room_number": "1",
+      "passport_no": null,
+      "course_code": "E417Z",
+      "remarks_count": 3
+    },
+    {
+      "inquiry_main": "0067621040",
+      "inquiry_branch": null,
+      "family_name": "HANKYU",
+      "given_name": "NAGOYA",
+      "room_type": "TWN",
+      "room_number": "2",
+      "passport_no": null,
+      "course_code": "E417Z",
+      "remarks_count": 5
+    },
+    {
+      "inquiry_main": "0067621010",
+      "inquiry_branch": null,
+      "family_name": "HANSHIN",
+      "given_name": "HACHIRO",
+      "room_type": "TWN",
+      "room_number": "3",
+      "passport_no": null,
+      "course_code": "E417ZC",
+      "remarks_count": 6
+    },
+    {
+      "inquiry_main": "0067621011",
+      "inquiry_branch": null,
+      "family_name": "HANSHIN",
+      "given_name": "TORAKO",
+      "room_type": "TWN",
+      "room_number": "4",
+      "passport_no": null,
+      "course_code": "E417Z",
+      "remarks_count": 3
+    },
+    {
+      "inquiry_main": "0067621012",
+      "inquiry_branch": null,
+      "family_name": "HANKYU",
+      "given_name": "OKOTARO",
+      "room_type": "TWN",
+      "room_number": "5",
+      "passport_no": null,
+      "course_code": "E417ZP",
+      "remarks_count": 2
+    },
+    {
+      "inquiry_main": "0067621012",
+      "inquiry_branch": null,
+      "family_name": "HABISU",
+      "given_name": "ENTO",
+      "room_type": "TWN",
+      "room_number": null,
+      "passport_no": "TT6879145",
+      "course_code": "E417ZP",
+      "remarks_count": 2
+    },
+    {
+      "inquiry_main": "0067621027",
+      "inquiry_branch": null,
+      "family_name": "TOKATSU",
+      "given_name": "BUTARO",
+      "room_type": "TWN",
+      "room_number": "6",
+      "passport_no": null,
+      "course_code": "EX417EC",
+      "remarks_count": 4
+    },
+    {
+      "inquiry_main": "0067621027",
+      "inquiry_branch": null,
+      "family_name": "CHEN",
+      "given_name": "QUANGUO",
+      "room_type": "TWN",
+      "room_number": null,
+      "passport_no": null,
+      "course_code": "EX417EC",
+      "remarks_count": 4
+    },
+    {
+      "inquiry_main": "0067621009",
+      "inquiry_branch": null,
+      "family_name": "HANKYU",
+      "given_name": "UMETARO",
+      "room_type": "TSU",
+      "room_number": "1",
+      "passport_no": null,
+      "course_code": "E417Z",
+      "remarks_count": 4
+    }
+  ],
+  "issue_count": 15,
+  "issue_codes": [
+    "missing_guest_data",
+    "op_rq_pending",
+    "rooms_mismatch_by_type",
+    "rooms_mismatch_total"
+  ]
+}
