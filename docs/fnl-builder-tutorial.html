@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fnl-builder Web UI 操作手順書</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --fg: #1a1a2e;
+    --accent: #16213e;
+    --border: #d1d5db;
+    --section-bg: #f9fafb;
+    --code-bg: #f3f4f6;
+    --highlight: #fef3c7;
+    --step-bg: #eff6ff;
+    --step-border: #3b82f6;
+    --caution-bg: #fef3c7;
+    --caution-border: #f59e0b;
+    --success-bg: #ecfdf5;
+    --success-border: #10b981;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Meiryo", sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    line-height: 1.8;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+  h1 { font-size: 1.6rem; border-bottom: 3px solid var(--accent); padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+  h2 { font-size: 1.3rem; margin-top: 2.5rem; margin-bottom: 0.8rem; padding: 0.4rem 0.6rem; background: var(--accent); color: #fff; border-radius: 4px; }
+  h3 { font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; border-left: 4px solid var(--accent); padding-left: 0.6rem; }
+  p { margin-bottom: 0.8rem; }
+  ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; }
+  li { margin-bottom: 0.3rem; }
+  code { background: var(--code-bg); padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.9em; font-family: "Consolas", "Monaco", monospace; }
+  .meta { color: #6b7280; font-size: 0.85em; margin-bottom: 2rem; }
+  nav { background: var(--section-bg); border: 1px solid var(--border); border-radius: 6px; padding: 1.2rem 1.5rem; margin-bottom: 2rem; }
+  nav h2 { background: none; color: var(--fg); font-size: 1.1rem; margin-top: 0; padding: 0; }
+  nav ol { margin-top: 0.5rem; }
+  nav a { color: #2563eb; text-decoration: none; }
+  nav a:hover { text-decoration: underline; }
+
+  .step {
+    background: var(--step-bg);
+    border-left: 5px solid var(--step-border);
+    border-radius: 0 8px 8px 0;
+    padding: 1.2rem 1.5rem;
+    margin: 1.5rem 0;
+  }
+  .step-number {
+    display: inline-block;
+    background: var(--step-border);
+    color: #fff;
+    width: 2rem;
+    height: 2rem;
+    line-height: 2rem;
+    text-align: center;
+    border-radius: 50%;
+    font-weight: bold;
+    margin-right: 0.5rem;
+    font-size: 0.95rem;
+  }
+  .step-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 0.6rem;
+  }
+  .step img {
+    max-width: 100%;
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    margin: 0.8rem 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .caution {
+    background: var(--caution-bg);
+    border-left: 4px solid var(--caution-border);
+    padding: 0.8rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .caution::before { content: "注意: "; font-weight: bold; color: #92400e; }
+
+  .success {
+    background: var(--success-bg);
+    border-left: 4px solid var(--success-border);
+    padding: 0.8rem 1rem;
+    margin: 1rem 0;
+    border-radius: 0 4px 4px 0;
+  }
+  .success::before { content: "完了: "; font-weight: bold; color: #065f46; }
+
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+  th, td { border: 1px solid var(--border); padding: 0.5rem 0.7rem; text-align: left; font-size: 0.92em; }
+  th { background: var(--section-bg); font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>fnl-builder Web UI 操作手順書</h1>
+<p class="meta">作成日: 2026-03-03 &#124; 対象: fnl-builder Web UI (localhost) &#124; 対象者: 現場担当者</p>
+
+<nav>
+  <h2>目次</h2>
+  <ol>
+    <li><a href="#prerequisites">事前準備</a></li>
+    <li><a href="#overview">操作の全体フロー</a></li>
+    <li><a href="#step1">手順1: Web UIを開く</a></li>
+    <li><a href="#step2">手順2: RoomingList PDF をアップロード</a></li>
+    <li><a href="#step3">手順3: PassengerList PDF をアップロード</a></li>
+    <li><a href="#step4">手順4: MessageList CSV をアップロード</a></li>
+    <li><a href="#step5">手順5: LLM Provider を確認する</a></li>
+    <li><a href="#step6">手順6: 「実行」ボタンを押す</a></li>
+    <li><a href="#step7">手順7: 結果テーブルを確認する</a></li>
+    <li><a href="#step8">手順8: バリデーション警告を確認する</a></li>
+    <li><a href="#step9">手順9: Excel ファイルをダウンロードする</a></li>
+    <li><a href="#files">入力ファイルの命名規則</a></li>
+    <li><a href="#troubleshooting">よくある問題と対処法</a></li>
+  </ol>
+</nav>
+
+<!-- ======================================================== -->
+<section id="prerequisites">
+  <h2>事前準備</h2>
+  <p>操作を開始する前に、以下の3種類のファイルを手元に用意してください。</p>
+  <table>
+    <thead><tr><th>ファイル種別</th><th>形式</th><th>ファイル名例</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td>RoomingList</td><td>PDF</td><td><code>1027_E417_ROOMINGLIST.pdf</code></td><td>部屋割り表（ルームタイプ、ゲスト名、問い合わせ番号等）</td></tr>
+      <tr><td>PassengerList</td><td>PDF</td><td><code>1027_E417_PASSENGERLIST.pdf</code></td><td>乗客名簿（氏名、パスポート情報等）</td></tr>
+      <tr><td>MessageList</td><td>PDF または CSV</td><td><code>1027_E417_MessageList(CSV).csv</code></td><td>メッセージリスト（特記事項の原文）</td></tr>
+    </tbody>
+  </table>
+  <div class="caution">各ファイルのサイズ上限は 200MB です。</div>
+</section>
+
+<!-- ======================================================== -->
+<section id="overview">
+  <h2>操作の全体フロー</h2>
+  <ol>
+    <li>ブラウザで Web UI（localhost）を開く</li>
+    <li>3種類のファイルをそれぞれのスロットにアップロードする</li>
+    <li>LLM Provider を確認する（通常は <code>openai</code> のまま）</li>
+    <li>「実行」ボタンを押す</li>
+    <li>結果テーブルとバリデーション警告を確認する</li>
+    <li>最終名簿 Excel（<code>final_list-*.xlsx</code>）が自動ダウンロードされる</li>
+  </ol>
+  <p>所要時間の目安: ファイルアップロードから Excel ダウンロードまで、LLM処理を含めて数十秒〜数分程度。</p>
+</section>
+
+<!-- ======================================================== -->
+<section id="step1">
+  <h2>手順1: Web UIを開く</h2>
+  <div class="step">
+    <div class="step-title"><span class="step-number">1</span> ブラウザで fnl-builder Web UI にアクセス</div>
+    <p>ブラウザのアドレスバーに <code>localhost</code> のURLを入力してアクセスします。「fnl-builder Web UI」というタイトルが表示されます。</p>
+    <p>左側のサイドバーに以下の4つの入力エリアがあることを確認してください。</p>
+    <ul>
+      <li><strong>RoomingList PDF</strong> ─ ルーミングリスト用のアップロードエリア</li>
+      <li><strong>PassengerList PDF</strong> ─ パッセンジャーリスト用のアップロードエリア</li>
+      <li><strong>MessageList PDF/CSV</strong> ─ メッセージリスト用のアップロードエリア</li>
+      <li><strong>LLM Provider</strong> ─ LLMプロバイダーの選択ドロップダウン</li>
+    </ul>
+    <p>一番下に赤い「実行」ボタンがあります。</p>
+    <img src="screenshots/step1_initial.png" alt="fnl-builder Web UI 初期画面">
+  </div>
+</section>
+
+<!-- ======================================================== -->
+<section id="step2">
+  <h2>手順2: RoomingList PDF をアップロード</h2>
+  <div class="step">
+    <div class="step-title"><span class="step-number">2</span> RoomingList PDF エリアの「Browse files」をクリック</div>
+    <p>左サイドバーの一番上にある「RoomingList PDF」セクションの「Browse files」ボタンをクリックします。</p>
+    <p>ファイル選択ダイアログが開くので、該当のルーミングリストPDFファイルを選択し、「アップロード」をクリックします。</p>
+    <img src="screenshots/step2_select_rooming.png" alt="RoomingList ファイル選択ダイアログ">
+    <p>アップロードが完了すると、ファイル名とサイズが表示されます（例: <code>1027_E417_ROOMIN... 63.7KB</code>）。ファイル名の右側の &times; ボタンで削除・差し替えが可能です。</p>
+    <img src="screenshots/step3_rooming_uploaded.png" alt="RoomingList アップロード完了">
+  </div>
+</section>
+
+<!-- ======================================================== -->
+<section id="step3">
+  <h2>手順3: PassengerList PDF をアップロード</h2>
+  <div class="step">
+    <div class="step-title"><span class="step-number">3</span> PassengerList PDF エリアの「Browse files」をクリック</div>
+    <p>「PassengerList PDF」セクションの「Browse files」ボタンをクリックし、同様にパッセンジャーリストPDFを選択・アップロードします。</p>
+    <img src="screenshots/step4_select_passenger.png" alt="PassengerList ファイル選択ダイアログ">
+    <p>アップロード完了後、ファイル名とサイズが表示されます（例: <code>1027_E417_PASSEN... 62.6KB</code>）。</p>
+    <img src="screenshots/step5_passenger_uploaded.png" alt="PassengerList アップロード完了">
+  </div>
+</section>
+
+<!-- ======================================================== -->
+<section id="step4">
+  <h2>手順4: MessageList CSV をアップロード</h2>
+  <div class="step">
+    <div class="step-title"><span class="step-number">4</span> MessageList PDF/CSV エリアの「Browse files」をクリック</div>
+    <p>「MessageList PDF/CSV」セクションの「Browse files」ボタンをクリックし、メッセージリストファイルを選択・アップロードします。PDF形式とCSV形式の両方に対応しています。</p>
+    <img src="screenshots/step6_select_messagelist.png" alt="MessageList ファイル選択ダイアログ">
+    <p>3つすべてのファイルがアップロードされた状態を確認します。</p>
+    <img src="screenshots/step7_all_uploaded.png" alt="全ファイルアップロード完了">
+  </div>
+  <div class="caution">3種類すべてのファイルをアップロードしてから「実行」を押してください。ファイルが不足している場合、正しい結果が得られません。</div>
+</section>
+
+<!-- ======================================================== -->
+<section id="step5">
+  <h2>手順5: LLM Provider を確認する</h2>
+  <div class="step">
+    <div class="step-title"><span class="step-number">5</span> LLM Provider のドロップダウンを確認</div>
+    <p>サイドバーの最下部にある「LLM Provider」ドロップダウンを確認します。通常は <code>openai</code> が選択されています。特に指示がない限り、変更する必要はありません。</p>
+  </div>
+</section>
+
+<!-- ======================================================== -->
+<section id="step6">
+  <h2>手順6: 「実行」ボタンを押す</h2>
+  <div class="step">
+    <div class="step-title"><span class="step-number">6</span> 赤い「実行」ボタンをクリック</div>
+    <p>サイドバーの一番下にある赤い「実行」ボタンをクリックします。処理が開始されると、右上に「Stop」ボタンが表示されます。</p>
+    <img src="screenshots/step8_click_run.png" alt="実行ボタンクリック後の状態">
+    <p>処理中は以下の工程が順に実行されます。</p>
+    <ol>
+      <li><strong>parse_stage</strong>: PDF/CSVの解析、テキスト抽出</li>
+      <li><strong>integrate_stage</strong>: LLM による特記事項の構造化抽出、ルールベース候補との統合</li>
+      <li><strong>render_stage</strong>: 最終名簿の生成、Excel出力</li>
+    </ol>
+  </div>
+  <div class="caution">処理中はブラウザのタブを閉じたり、ページを更新しないでください。LLM呼び出しを含むため、データ量によっては数分かかる場合があります。</div>
+</section>
+
+<!-- ======================================================== -->
+<section id="step7">
+  <h2>手順7: 結果テーブルを確認する</h2>
+  <div class="step">
+    <div class="step-title"><span class="step-number">7</span> メイン画面に結果テーブルが表示される</div>
+    <p>処理が完了すると、メイン画面にツアー情報と名簿テーブルが表示されます。</p>
+    <img src="screenshots/step9_result_table.png" alt="結果テーブル表示">
+    <h3>表示される情報</h3>
+    <table>
+      <thead><tr><th>項目</th><th>説明</th><th>例</th></tr></thead>
+      <tbody>
+        <tr><td><code>tour_ref</code></td><td>ツアーリファレンス番号</td><td>E417Z 1027</td></tr>
+        <tr><td><code>tour_name</code></td><td>ツアー名</td><td>E417 HEI OSA TRAP...</td></tr>
+        <tr><td><code>total_pax</code></td><td>総人数</td><td>7</td></tr>
+      </tbody>
+    </table>
+    <h3>名簿テーブルのカラム</h3>
+    <table>
+      <thead><tr><th>カラム名</th><th>内容</th></tr></thead>
+      <tbody>
+        <tr><td><code>room_type</code></td><td>部屋タイプ（TWN, TSU等）</td></tr>
+        <tr><td><code>number</code></td><td>枝番</td></tr>
+        <tr><td><code>inquiry</code></td><td>問い合わせ番号</td></tr>
+        <tr><td><code>family_name</code></td><td>姓</td></tr>
+        <tr><td><code>given_name</code></td><td>名</td></tr>
+        <tr><td><code>remarks</code></td><td>統合済み特記事項（LLM抽出 + ルールベース候補の統合結果）</td></tr>
+      </tbody>
+    </table>
+    <p><code>remarks</code> カラムに表示される内容が、fnl-builder が抽出・構造化した特記事項です。ここに表示されている内容が最終 Excel にも反映されます。</p>
+  </div>
+</section>
+
+<!-- ======================================================== -->
+<section id="step8">
+  <h2>手順8: バリデーション警告を確認する</h2>
+  <div class="step">
+    <div class="step-title"><span class="step-number">8</span> テーブル下部の警告メッセージを確認</div>
+    <p>結果テーブルの下部に、黄色またはオレンジ色の警告メッセージが表示される場合があります。これらはデータの整合性チェック結果です。</p>
+    <img src="screenshots/step10_validation.png" alt="バリデーション警告">
+    <h3>主な警告メッセージの意味</h3>
+    <table>
+      <thead><tr><th>警告</th><th>意味</th><th>対応</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>[missing_guest_data]</code></td>
+          <td>ゲストデータに欠損がある（例: <code>issue_date</code>, <code>expiry_date</code>, <code>passport_no</code>）</td>
+          <td>パスポート情報が未入力のゲストがいる。PassengerListの元データを確認。</td>
+        </tr>
+        <tr>
+          <td><code>[rooms_mismatch_total]</code></td>
+          <td>RoomingList の部屋数合計が申告数と一致しない</td>
+          <td>RoomingList の部屋数と申込総数を突合。例: 「Total Rooms不一致: 申告=5 出力=4」</td>
+        </tr>
+        <tr>
+          <td><code>[rooms_mismatch_by_type]</code></td>
+          <td>部屋タイプ別の数が一致しない</td>
+          <td>例: 「TWN部屋数不一致: 申告=4 出力=3」。RoomingList原本と照合。</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="caution">警告が表示されても処理は完了しています。警告は入力データの問題を示すものであり、出力 Excel は生成されます。ただし、内容の正確性を確認するために、警告内容を必ず目視チェックしてください。</div>
+</section>
+
+<!-- ======================================================== -->
+<section id="step9">
+  <h2>手順9: Excel ファイルをダウンロードする</h2>
+  <div class="step">
+    <div class="step-title"><span class="step-number">9</span> 最終名簿 Excel が自動ダウンロードされる</div>
+    <p>処理完了後、ブラウザの右上にダウンロード通知が表示され、<code>final_list-*.xlsx</code> という名前の Excel ファイルが自動的にダウンロードされます。</p>
+    <img src="screenshots/step12_download.png" alt="Excel ファイルのダウンロード">
+    <p>ダウンロードされたファイルが最終名簿（FNL）です。ファイル名の末尾の数字（例: <code>final_list-6.xlsx</code>）は連番であり、同じセッション内で複数回実行した場合に増加します。</p>
+  </div>
+  <div class="success">以上で操作は完了です。ダウンロードされた Excel ファイルを開き、特記事項の内容を確認してください。</div>
+</section>
+
+<!-- ======================================================== -->
+<section id="files">
+  <h2>入力ファイルの命名規則</h2>
+  <p>fnl-builder は以下の命名規則のファイルを想定しています。</p>
+  <table>
+    <thead><tr><th>種別</th><th>命名パターン</th><th>例</th></tr></thead>
+    <tbody>
+      <tr><td>RoomingList</td><td><code>{受付番号}_{コース}_ROOMINGLIST.pdf</code></td><td><code>1027_E417_ROOMINGLIST.pdf</code></td></tr>
+      <tr><td>PassengerList</td><td><code>{受付番号}_{コース}_PASSENGERLIST.pdf</code></td><td><code>1027_E417_PASSENGERLIST.pdf</code></td></tr>
+      <tr><td>MessageList (CSV)</td><td><code>{受付番号}_{コース}_MessageList(CSV).csv</code></td><td><code>1027_E417_MessageList(CSV).csv</code></td></tr>
+      <tr><td>MessageList (PDF)</td><td><code>{受付番号}_{コース}_MessageList.pdf</code></td><td><code>1027_E417_MessageList.pdf</code></td></tr>
+    </tbody>
+  </table>
+  <p>コースコード（例: <code>E417</code>）からアルファベットプレフィックスを除去した数値部分（<code>417</code>）で、コース別の抽出補足ルールが自動的に適用されます。</p>
+</section>
+
+<!-- ======================================================== -->
+<section id="troubleshooting">
+  <h2>よくある問題と対処法</h2>
+  <table>
+    <thead><tr><th>症状</th><th>原因</th><th>対処法</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>「実行」後に何も表示されない</td>
+        <td>LLM API の接続エラー、またはファイル形式の不一致</td>
+        <td>LLM Provider の設定を確認。ブラウザの開発者コンソール（F12）でエラーメッセージを確認。</td>
+      </tr>
+      <tr>
+        <td>remarks が空欄のゲストが多い</td>
+        <td>MessageList にそのゲストに関する特記事項がない。または who_id の紐付けが失敗している。</td>
+        <td>MessageList の原本を確認し、問い合わせ番号-枝番がRoomingListと一致しているか確認。</td>
+      </tr>
+      <tr>
+        <td><code>[missing_guest_data]</code> 警告が大量に出る</td>
+        <td>PassengerList のPDF解析でパスポート情報が読み取れていない</td>
+        <td>PassengerList PDFの品質（スキャン解像度、文字の鮮明さ）を確認。OCR品質が低い場合は、より鮮明なPDFを用意する。</td>
+      </tr>
+      <tr>
+        <td><code>[rooms_mismatch]</code> 警告が出る</td>
+        <td>RoomingList の部屋数とPassengerList の人数に不整合がある</td>
+        <td>RoomingList 原本の部屋数・タイプを確認。手配確認書（ArrangementRequestForm）との整合も確認。</td>
+      </tr>
+      <tr>
+        <td>Excel がダウンロードされない</td>
+        <td>処理中にエラーが発生した、またはブラウザのポップアップブロック</td>
+        <td>ブラウザのダウンロード設定・ポップアップブロックを確認。再度「実行」を試す。</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<footer style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.85em; color: #6b7280;">
+  <p>本手順書は fnl-builder Web UI の画面収録動画（2026-03-02 撮影）に基づいて作成しています。</p>
+  <p>スクリーンショットは実際の操作画面から抽出したものです。UIの更新により画面の見た目が異なる場合があります。</p>
+</footer>
+
+</body>
+</html>
